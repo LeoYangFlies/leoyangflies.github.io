@@ -115,9 +115,9 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
               <section aria-labelledby={`bd-${b.title}`}>
                 <h2 id={`bd-${b.title}`}>{b.title}</h2>
                 {b.note && <p class="bd-note">{b.note}</p>}
-                <ol class="bars">
-                  {b.rows.slice(0, b.limit).map((r) => (
-                    <li>
+                <ol class="bars" id={`list-${b.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                  {b.rows.map((r, i) => (
+                    <li class:list={[i >= b.limit && 'extra']}>
                       <span class="bar-name">
                         {r.name}
                         {r.sub && <span class="bar-sub">{r.sub}</span>}
@@ -129,7 +129,18 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
                     </li>
                   ))}
                 </ol>
-                {b.rows.length > b.limit && <p class="bd-note">and {b.rows.length - b.limit} more</p>}
+                {b.rows.length > b.limit && (
+                  <button
+                    type="button"
+                    class="expand"
+                    hidden
+                    aria-expanded="false"
+                    aria-controls={`list-${b.title.toLowerCase().replace(/\s+/g, '-')}`}
+                    data-more={`Show ${b.rows.length - b.limit} more`}
+                  >
+                    <span class="expand-label">Show {b.rows.length - b.limit} more</span>
+                  </button>
+                )}
               </section>
             );
           })}
@@ -213,6 +224,27 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
     }
   </div>
 </Base>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('button.expand').forEach((button) => {
+    const list = document.getElementById(button.getAttribute('aria-controls')!);
+    if (!list) return;
+    const label = button.querySelector('.expand-label')!;
+    list.classList.add('collapsed');
+    button.hidden = false;
+    button.addEventListener('click', () => {
+      const opening = list.classList.contains('collapsed');
+      list.classList.toggle('collapsed', !opening);
+      button.setAttribute('aria-expanded', String(opening));
+      label.textContent = opening ? 'Show fewer' : button.dataset.more!;
+      // After collapsing a long list, keep its section in view instead of leaving the reader far below it.
+      if (!opening) {
+        const section = button.closest('section');
+        if (section && section.getBoundingClientRect().top < 0) section.scrollIntoView({ block: 'start' });
+      }
+    });
+  });
+</script>
 
 <style>
   .head {
@@ -306,6 +338,44 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
     font-size: var(--step--1);
     color: var(--muted);
     margin-top: 0.5rem;
+  }
+
+  .bars.collapsed .extra {
+    display: none;
+  }
+
+  .expand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.6rem;
+    padding: 0.45rem 0.9rem 0.45rem 0.75rem;
+    font: inherit;
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--ink);
+    background: transparent;
+    border: 1.5px solid var(--rule);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .expand:hover {
+    border-color: var(--ink);
+  }
+
+  .expand::before {
+    content: '';
+    width: 0.42rem;
+    height: 0.42rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-0.12rem) rotate(45deg);
+    transition: transform 0.15s ease;
+  }
+
+  .expand[aria-expanded='true']::before {
+    transform: translateY(0.1rem) rotate(-135deg);
   }
 
   .bars {
