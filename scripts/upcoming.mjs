@@ -3,6 +3,7 @@
 //
 //   node scripts/upcoming.mjs encrypt <schedule.yaml>   writes private/upcoming.enc.json
 //   node scripts/upcoming.mjs decrypt                    prints the schedule (keep it private!)
+//   node scripts/upcoming.mjs verify                     checks the key works (prints no details)
 //   node scripts/upcoming.mjs check                      used by the scheduled GitHub job
 //
 // The key comes from the UPCOMING_FLIGHTS_KEY environment variable. Nothing this tool
@@ -30,6 +31,19 @@ if (command === 'encrypt') {
 } else if (command === 'decrypt') {
   if (!key) throw new Error('Set UPCOMING_FLIGHTS_KEY first.');
   process.stdout.write(decrypt(readFileSync(ENCRYPTED_FILE, 'utf8'), key));
+} else if (command === 'verify') {
+  // Succeeds only if the key is set and can read the schedule. Prints nothing about it.
+  if (!key) {
+    console.log('UPCOMING_FLIGHTS_KEY is not set.');
+    process.exit(1);
+  }
+  try {
+    const count = parseSchedule(decrypt(readFileSync(ENCRYPTED_FILE, 'utf8'), key)).length;
+    console.log(`Key works: ${count} flights on file.`);
+  } catch {
+    console.log('The key could not read the schedule. Check that the secret was pasted exactly.');
+    process.exit(1);
+  }
 } else if (command === 'check') {
   // Decide whether the live site needs rebuilding, and log any flights that have landed.
   if (!key || !existsSync(ENCRYPTED_FILE)) {
@@ -77,6 +91,6 @@ if (command === 'encrypt') {
   output('deploy', String(stateChanged || fresh.length > 0));
   output('logged', String(fresh.length > 0));
 } else {
-  console.log('Usage: node scripts/upcoming.mjs encrypt <file.yaml> | decrypt | check');
+  console.log('Usage: node scripts/upcoming.mjs encrypt <file.yaml> | decrypt | verify | check');
   process.exit(1);
 }

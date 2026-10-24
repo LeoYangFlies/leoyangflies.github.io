@@ -40,6 +40,11 @@ jobs:
       - name: Install tools for the check
         if: github.event_name != 'push'
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify the schedule key
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          UPCOMING_FLIGHTS_KEY: ${{ secrets.UPCOMING_FLIGHTS_KEY }}
+        run: node scripts/upcoming.mjs verify
       - name: Decide whether to rebuild
         id: decide
         env:
