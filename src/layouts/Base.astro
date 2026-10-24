@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { SITE_TITLE, SITE_DESCRIPTION, AUTHOR, SOCIAL } from '../consts';
+import { SITE_TITLE, SITE_DESCRIPTION, AUTHOR, SOCIAL, TIPS_TITLE } from '../consts';
 
 interface Props {
   title?: string;
@@ -17,6 +17,7 @@ const path = Astro.url.pathname;
 
 const nav = [
   { href: '/reviews/', label: 'Reviews' },
+  { href: '/carry-on/', label: TIPS_TITLE },
   { href: '/logbook/', label: 'Logbook' },
   { href: '/about/', label: 'About' },
 ];
@@ -131,6 +132,7 @@ const year = new Date().getFullYear();
 
   nav a {
     display: block;
+    white-space: nowrap;
     padding: 0.4rem 0.75rem;
     color: var(--text);
     text-decoration: none;
@@ -147,6 +149,12 @@ const year = new Date().getFullYear();
     color: var(--ink);
     box-shadow: inset 0 -2px 0 var(--red);
     border-radius: 0;
+  }
+
+  @media (max-width: 26rem) {
+    nav a {
+      padding-inline: 0.5rem;
+    }
   }
 
   .site-footer {

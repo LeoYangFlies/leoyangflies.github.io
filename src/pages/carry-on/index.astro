@@ -1,0 +1,191 @@
+---
+import Base from '../../layouts/Base.astro';
+import TipItem from '../../components/TipItem.astro';
+import { TIPS_TITLE, TIPS_DESCRIPTION, TIP_TOPICS, type TipTopic } from '../../consts';
+import { getTips } from '../../lib/tips';
+
+const tips = await getTips();
+// Only offer topics that have at least one tip.
+const used = (Object.keys(TIP_TOPICS) as TipTopic[]).filter((t) => tips.some((tip) => tip.data.topic === t));
+const countFor = (t: TipTopic) => tips.filter((tip) => tip.data.topic === t).length;
+---
+
+<Base title={TIPS_TITLE} description={TIPS_DESCRIPTION}>
+  <div class="wrap">
+    <header class="page-head">
+      <h1>{TIPS_TITLE}</h1>
+      <p>{TIPS_DESCRIPTION}</p>
+    </header>
+
+    <div class="layout">
+      {
+        used.length > 1 && (
+          <nav class="topics" aria-label="Topics">
+            <h2 class="visually-hidden">Topics</h2>
+            <ul role="group" aria-label="Show tips about">
+              <li>
+                <button type="button" data-filter="all" aria-pressed="true">
+                  <span>All topics</span>
+                  <span class="count">{tips.length}</span>
+                </button>
+              </li>
+              {used.map((t) => (
+                <li>
+                  <button type="button" data-filter={t} aria-pressed="false">
+                    <span>{TIP_TOPICS[t]}</span>
+                    <span class="count">{countFor(t)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
+      }
+
+      <div>
+        <p class="status visually-hidden" role="status" aria-live="polite"></p>
+        <div class="list">
+          {tips.map((tip) => <TipItem tip={tip} headingLevel="h2" />)}
+        </div>
+        {tips.length === 0 && <p class="none">No tips yet. Add one in src/content/tips/.</p>}
+      </div>
+    </div>
+  </div>
+</Base>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const items = document.querySelectorAll<HTMLElement>('.list [data-topic]');
+  const status = document.querySelector<HTMLElement>('.status');
+
+  function show(filter: string, announce = true) {
+    let shown = 0;
+    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
+    items.forEach((item) => {
+      const match = filter === 'all' || item.dataset.topic === filter;
+      item.hidden = !match;
+      if (match) shown++;
+    });
+    if (announce && status) status.textContent = `Showing ${shown} ${shown === 1 ? 'tip' : 'tips'}`;
+  }
+
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const filter = button.dataset.filter ?? 'all';
+      show(filter);
+      history.replaceState(null, '', filter === 'all' ? location.pathname : `#${filter}`);
+    });
+  });
+
+  // Links like /carry-on/#jetlag open with that topic already chosen.
+  const fromHash = location.hash.slice(1);
+  if (fromHash && [...buttons].some((b) => b.dataset.filter === fromHash)) show(fromHash, false);
+</script>
+
+<style>
+  .page-head {
+    display: grid;
+    gap: 0.6rem;
+    margin: 1.5rem 0 2.5rem;
+  }
+
+  .page-head h1 {
+    font-size: var(--step-4);
+  }
+
+  .page-head p {
+    color: var(--muted);
+    font-size: var(--step-1);
+    max-width: 44ch;
+  }
+
+  .layout {
+    display: grid;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .topics ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .topics button {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    background: transparent;
+    border: 1.5px solid var(--rule);
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .topics button:hover {
+    color: var(--ink);
+    background: var(--paper-deep);
+  }
+
+  .topics button[aria-pressed='true'] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  @media (min-width: 56rem) {
+    .layout {
+      grid-template-columns: 13rem minmax(0, 1fr);
+      gap: 4rem;
+    }
+    .topics {
+      position: sticky;
+      top: 1.5rem;
+    }
+    .topics ul {
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .topics button {
+      width: 100%;
+      justify-content: space-between;
+      border-radius: var(--radius-sm);
+      border-color: transparent;
+      padding: 0.5rem 0.75rem;
+    }
+    .topics button[aria-pressed='true'] {
+      background: transparent;
+      color: var(--ink);
+      border-color: transparent;
+      box-shadow: inset 3px 0 0 var(--red);
+      font-weight: 650;
+    }
+  }
+
+  .count {
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .list {
+    display: grid;
+    gap: 2.6rem;
+    max-width: 46rem;
+  }
+
+  .list :global([hidden]) {
+    display: none;
+  }
+
+  .none {
+    color: var(--muted);
+  }
+</style>

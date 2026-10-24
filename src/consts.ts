@@ -23,3 +23,18 @@ export const CATEGORIES = {
 export type Category = keyof typeof CATEGORIES;
 
 export const CABINS = ['Economy', 'Premium Economy', 'Business', 'First'] as const;
+
+// Carry-On: travel tips and hacks. The key is what you write in a tip's "topic" field.
+export const TIPS_TITLE = 'Carry-On';
+export const TIPS_DESCRIPTION = 'Tips and hacks picked up over more than half a million kilometers of flying.';
+export const TIP_TOPICS = {
+  booking: 'Booking',
+  seats: 'Seats',
+  airports: 'Airports',
+  onboard: 'On board',
+  jetlag: 'Jet lag',
+  packing: 'Packing',
+  points: 'Points and miles',
+} as const;
+
+export type TipTopic = keyof typeof TIP_TOPICS;

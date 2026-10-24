@@ -1,7 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
-import { CATEGORIES, CABINS } from './consts';
+import { CATEGORIES, CABINS, TIP_TOPICS } from './consts';
 import { AIRPORTS } from './data/airports';
 
 const categoryKeys = Object.keys(CATEGORIES) as [keyof typeof CATEGORIES, ...(keyof typeof CATEGORIES)[]];
@@ -57,4 +57,19 @@ const reviews = defineCollection({
       }),
 });
 
-export const collections = { reviews };
+const topicKeys = Object.keys(TIP_TOPICS) as [keyof typeof TIP_TOPICS, ...(keyof typeof TIP_TOPICS)[]];
+
+// Carry-On tips: one Markdown file each in src/content/tips/.
+const tips = defineCollection({
+  loader: glob({ base: './src/content/tips', pattern: '**/*.{md,mdx}' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(), // one sentence shown in lists and link previews
+    published: z.coerce.date(),
+    updated: z.coerce.date().optional(),
+    topic: z.enum(topicKeys),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { reviews, tips };

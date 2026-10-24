@@ -1,0 +1,124 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import TipItem from '../../components/TipItem.astro';
+import { TIPS_TITLE } from '../../consts';
+import { formatDate } from '../../lib/reviews';
+import { getTips, readingMinutes, topicLabel, type Tip } from '../../lib/tips';
+
+export async function getStaticPaths() {
+  const tips = await getTips();
+  return tips.map((tip) => {
+    // Suggest more tips on the same topic first, then the newest others.
+    const others = tips.filter((t) => t.id !== tip.id);
+    const more = [
+      ...others.filter((t) => t.data.topic === tip.data.topic),
+      ...others.filter((t) => t.data.topic !== tip.data.topic),
+    ].slice(0, 3);
+    return { params: { id: tip.id }, props: { tip, more } };
+  });
+}
+
+interface Props {
+  tip: Tip;
+  more: Tip[];
+}
+
+const { tip, more } = Astro.props;
+const { data } = tip;
+const { Content } = await render(tip);
+---
+
+<Base title={data.title} description={data.description} type="article">
+  <article class="wrap">
+    <header class="head">
+      <p class="crumbs">
+        <a href="/carry-on/">{TIPS_TITLE}</a>
+        <span aria-hidden="true">/</span>
+        <a href={`/carry-on/#${data.topic}`}>{topicLabel(data.topic)}</a>
+      </p>
+      <h1>{data.title}</h1>
+      <p class="lede">{data.description}</p>
+      <p class="meta">
+        <span>{formatDate(data.published)}</span>
+        {data.updated && <span>Updated {formatDate(data.updated)}</span>}
+        <span>{readingMinutes(tip)} min read</span>
+      </p>
+    </header>
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    {
+      more.length > 0 && (
+        <aside class="more" aria-labelledby="more-heading">
+          <h2 id="more-heading">More from {TIPS_TITLE}</h2>
+          <div class="more-list">
+            {more.map((t) => (
+              <TipItem tip={t} />
+            ))}
+          </div>
+        </aside>
+      )
+    }
+  </article>
+</Base>
+
+<style>
+  .head {
+    display: grid;
+    gap: 1rem;
+    margin: 1.5rem 0 2.5rem;
+    max-width: 48rem;
+  }
+
+  .crumbs {
+    display: flex;
+    gap: 0.5rem;
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .head h1 {
+    font-size: var(--step-4);
+  }
+
+  .lede {
+    font-size: var(--step-1);
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 48ch;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.4rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .more {
+    margin-top: 4.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .more h2 {
+    font-size: var(--step-2);
+    margin-bottom: 1.75rem;
+  }
+
+  .more-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: 2rem 3rem;
+  }
+
+  .more-list :global(.title) {
+    font-size: var(--step-1);
+  }
+</style>

@@ -4,14 +4,17 @@ import Cover from '../components/Cover.astro';
 import Postmark from '../components/Postmark.astro';
 import ReviewItem from '../components/ReviewItem.astro';
 import RouteMap from '../components/RouteMap.astro';
-import { SITE_DESCRIPTION } from '../consts';
+import TipItem from '../components/TipItem.astro';
+import { SITE_DESCRIPTION, TIPS_TITLE } from '../consts';
 import { getReviews, reviewKind, reviewUrl, postmarkText, whereShort, whereLong } from '../lib/reviews';
 import { getStats, fmt } from '../lib/flights';
+import { getTips } from '../lib/tips';
 
 const reviews = await getReviews();
 const [latest, ...rest] = reviews;
 const recent = rest.slice(0, 6);
 const stats = getStats();
+const tips = (await getTips()).slice(0, 3);
 const stamp = latest ? postmarkText(latest) : undefined;
 ---
 
@@ -61,6 +64,22 @@ const stamp = latest ? postmarkText(latest) : undefined;
           <div class="recent-list">
             {recent.map((r) => (
               <ReviewItem review={r} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      tips.length > 0 && (
+        <section class="tips" aria-labelledby="tips-heading">
+          <div class="section-head">
+            <h2 id="tips-heading">{TIPS_TITLE}</h2>
+            <a href="/carry-on/">All tips</a>
+          </div>
+          <div class="tips-list">
+            {tips.map((t) => (
+              <TipItem tip={t} />
             ))}
           </div>
         </section>
@@ -182,6 +201,7 @@ const stamp = latest ? postmarkText(latest) : undefined;
 
   /* Sections */
   .recent,
+  .tips,
   .logbook {
     margin-top: 4.5rem;
   }
@@ -209,6 +229,16 @@ const stamp = latest ? postmarkText(latest) : undefined;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
     gap: 2.2rem 3rem;
+  }
+
+  .tips-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: 2rem 3rem;
+  }
+
+  .tips-list :global(.title) {
+    font-size: var(--step-1);
   }
 
   .logbook-body {
