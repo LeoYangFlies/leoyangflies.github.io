@@ -1,78 +1,211 @@
 # Leo's flight log: every flight, reviewed or not. The Logbook page is built from this file.
 #
-# Add one block per flight, newest or oldest first (order doesn't matter):
+# Add one line per flight, anywhere in the list (it's sorted automatically). Fields:
+#   date      departure date, YYYY-MM-DD
+#   airline   airline name
+#   flight    flight number (optional)
+#   from, to  airport codes; add new ones to src/data/airports.ts
+#   aircraft  optional
+#   cabin     optional: Economy, Premium Economy, Business or First
+#   seat      optional
+#   duration  optional, e.g. 14h 35m
+#   review    optional: a review's file name (without .md) to link it from the Logbook
 #
-# - date: 2026-08-20          # departure date, YYYY-MM-DD
-#   airline: China Eastern
-#   flight: MU587             # optional
-#   from: PVG                 # airport codes; add new ones to src/data/airports.ts
-#   to: JFK
-#   aircraft: Boeing 777-300ER   # optional
-#   cabin: Economy            # optional: Economy, Premium Economy, Business or First
-#   seat: 45K                 # optional
-#   duration: 14h 35m         # optional, time in the air
-#   review: my-review-file    # optional: the review's file name, without .md
-#
-# The entries marked "sample: true" are placeholders. Delete them once real flights are in.
+# Transcribed from Leo's flight app history on October 24, 2026.
 
-- date: 2026-08-20
-  airline: Sample Airways
-  flight: SA101
-  from: PVG
-  to: JFK
-  aircraft: Boeing 777-300ER
-  cabin: Economy
-  seat: 45K
-  duration: 14h 20m
-  review: sample-pvg-jfk
-  sample: true
 
-- date: 2026-06-14
-  airline: Sample Airways
-  flight: SA102
-  from: JFK
-  to: PVG
-  aircraft: Boeing 777-300ER
-  cabin: Economy
-  duration: 15h 40m
-  sample: true
+# 2026
+- { date: 2026-09-28, airline: Delta Air Lines, flight: DL 1316, from: DTW, to: JFK, aircraft: Airbus A319, cabin: Economy, duration: 2h 1m }
+- { date: 2026-09-27, airline: Delta Air Lines, flight: DL 5841, from: PIT, to: DTW, aircraft: Embraer 175, cabin: Economy, duration: 1h 16m }
+- { date: 2026-09-26, airline: American Airlines, flight: AA 2675, from: ORD, to: PIT, aircraft: Airbus A320, cabin: Economy, seat: 4F, duration: 1h 23m }
+- { date: 2026-09-25, airline: American Airlines, flight: AA 815, from: CLT, to: ORD, aircraft: Boeing 737-800, cabin: Business, seat: 2A, duration: 2h 4m }
+- { date: 2026-09-25, airline: American Airlines, flight: AA 377, from: JFK, to: CLT, aircraft: Boeing 737-800, cabin: Economy, seat: 9F, duration: 2h 10m }
+- { date: 2026-08-22, airline: Air Canada, flight: AC 1502, from: YYZ, to: EWR, aircraft: Airbus A320, cabin: Business, seat: 1A, duration: 1h 27m }
+- { date: 2026-08-22, airline: Cathay Pacific, flight: CX 820, from: HKG, to: YYZ, aircraft: Airbus A350-1000, cabin: Business, seat: 22D, duration: 14h 56m }
+- { date: 2026-08-21, airline: Cathay Pacific, flight: CX 369, from: PVG, to: HKG, aircraft: Boeing 777-300, cabin: Economy, seat: 54K, duration: 2h 51m }
+- { date: 2026-07-27, airline: Japan Airlines, flight: JL 85, from: HND, to: PVG, aircraft: Boeing 767-300, cabin: Business, seat: 3A, duration: 3h 10m }
+- { date: 2026-07-26, airline: American Airlines, flight: AA 169, from: LAX, to: HND, aircraft: Boeing 787-9, cabin: Business, seat: 1L, duration: 11h 11m }
+- { date: 2026-07-25, airline: Alaska Airlines, flight: AS 287, from: EWR, to: LAX, aircraft: Boeing 737 MAX 8, cabin: Business, seat: 1F, duration: 5h 31m }
+- { date: 2026-06-27, airline: American Airlines, flight: AA 276, from: SFO, to: JFK, aircraft: Airbus A321, cabin: Business, seat: 6A, duration: 5h 12m }
+- { date: 2026-06-27, airline: Japan Airlines, flight: JL 58, from: NRT, to: SFO, aircraft: Boeing 787-9, cabin: Premium Economy, duration: 9h 48m }
+- { date: 2026-06-27, airline: China Eastern, flight: MU 521, from: PVG, to: NRT, aircraft: Airbus A330-200, cabin: Economy, seat: 42A, duration: 3h 15m }
+- { date: 2026-06-05, airline: Hainan Airlines, flight: HU 7721, from: SZX, to: PVG, aircraft: Boeing 737-800, cabin: Business, seat: 1A, duration: 2h 27m }
+- { date: 2026-06-04, airline: Hainan Airlines, flight: HU 438, from: FCO, to: SZX, aircraft: Boeing 787-9, cabin: Business, seat: 16A, duration: 11h 24m }
+- { date: 2026-05-24, airline: British Airways, flight: BA 520, from: LHR, to: FLR, aircraft: Airbus A320neo, cabin: Business, seat: 6F, duration: 2h 16m }
+- { date: 2026-05-23, airline: British Airways, flight: BA 112, from: JFK, to: LHR, aircraft: Boeing 777-300ER, cabin: Premium Economy, seat: 30K, duration: 7h 12m }
+- { date: 2026-03-01, airline: Cathay Pacific, flight: CX 844, from: HKG, to: JFK, aircraft: Airbus A350-1000, cabin: Premium Economy, seat: 30A, duration: 15h 22m }
+- { date: 2026-02-28, airline: Cathay Pacific, flight: CX 451, from: TPE, to: HKG, aircraft: Boeing 777-300, cabin: Economy, seat: 39A, duration: 1h 59m }
+- { date: 2026-02-28, airline: Cathay Pacific, flight: CX 451, from: NRT, to: TPE, aircraft: Boeing 777-300, cabin: Business, seat: 14E, duration: 3h 39m }
+- { date: 2026-02-24, airline: Japan Airlines, flight: JL 904, from: OKA, to: HND, aircraft: Airbus A350-900, cabin: Economy, seat: 49D, duration: 2h 11m }
+- { date: 2026-02-24, airline: Japan Transocean Air, flight: NU 552, from: MMY, to: OKA, aircraft: Boeing 737-800, cabin: Economy, duration: 52m }
+- { date: 2026-02-21, airline: Japan Transocean Air, flight: NU 571, from: OKA, to: MMY, aircraft: Boeing 737-800, cabin: Economy, seat: 15A, duration: 44m }
+- { date: 2026-02-21, airline: China Eastern, flight: MU 2085, from: PVG, to: OKA, aircraft: Airbus A321neo, cabin: Business, seat: 7A, duration: 2h 17m }
+- { date: 2026-02-15, airline: Cathay Pacific, flight: CX 364, from: HKG, to: PVG, aircraft: Airbus A330-300, cabin: Economy, seat: 39A, duration: 2h 38m }
+- { date: 2026-02-14, airline: Cathay Pacific, flight: CX 841, from: JFK, to: HKG, aircraft: Airbus A350-900, cabin: Premium Economy, seat: 30A, duration: 16h 46m }
+- { date: 2026-01-04, airline: United Airlines, flight: UA 2661, from: ORD, to: LGA, aircraft: Boeing 737-800, cabin: Business, seat: 3F, duration: 2h 1m }
+- { date: 2026-01-04, airline: Japan Airlines, flight: JL 10, from: HND, to: ORD, aircraft: Boeing 777-300ER, cabin: Premium Economy, seat: 18K, duration: 11h 39m }
+- { date: 2026-01-04, airline: ANA, flight: NH 968, from: PVG, to: HND, aircraft: Boeing 787-9, cabin: Economy, seat: 34A, duration: 2h 19m }
 
-- date: 2026-01-22
-  airline: Sample Airways
-  flight: SA101
-  from: PVG
-  to: JFK
-  aircraft: Airbus A350-900
-  cabin: Economy
-  duration: 14h 5m
-  sample: true
+# 2025
+- { date: 2025-12-22, airline: Shanghai Airlines, flight: FM 816, from: HND, to: SHA, aircraft: Boeing 737-800, cabin: Economy, seat: 39L, duration: 3h 37m }
+- { date: 2025-12-20, airline: Japan Airlines, flight: JL 9, from: ORD, to: HND, aircraft: Boeing 777-300ER, cabin: Premium Economy, seat: 18A, duration: 13h 43m }
+- { date: 2025-12-20, airline: Air Canada, flight: AC 507, from: YYZ, to: ORD, aircraft: Airbus A220-300, cabin: Economy, seat: 14A, duration: 2h 10m }
+- { date: 2025-12-20, airline: Porter Airlines, flight: PD 604, from: LGA, to: YYZ, aircraft: Embraer 195-E2, cabin: Premium Economy, seat: 1D, duration: 2h 9m }
+- { date: 2025-11-30, airline: American Airlines, flight: AA 276, from: SFO, to: JFK, aircraft: Airbus A321, cabin: First, seat: 5A, duration: 5h 25m }
+- { date: 2025-11-25, airline: Alaska Airlines, flight: AS 634, from: LAS, to: SFO, aircraft: Boeing 737-800, cabin: Premium Economy, seat: 9A, duration: 1h 34m }
+- { date: 2025-11-22, airline: Alaska Airlines, flight: AS 776, from: SFO, to: LAS, aircraft: Boeing 737-900, cabin: Business, seat: 1A, duration: 1h 40m }
+- { date: 2025-11-22, airline: Alaska Airlines, flight: AS 227, from: JFK, to: SFO, aircraft: Boeing 737-900, cabin: Premium Economy, seat: 6F, duration: 5h 50m }
+- { date: 2025-09-27, airline: Alaska Airlines, flight: AS 36, from: SAN, to: JFK, aircraft: Boeing 737-900, cabin: Business, seat: 1F, duration: 5h 23m }
+- { date: 2025-09-27, airline: Alaska Airlines, flight: AS 35, from: JFK, to: SAN, aircraft: Boeing 737-800, cabin: Premium Economy, seat: 10A, duration: 6h 39m }
+- { date: 2025-08-24, airline: Delta Air Lines, flight: DL 129, from: BCN, to: JFK, aircraft: Boeing 767-400, cabin: Economy, seat: 43G, duration: 8h 24m }
+- { date: 2025-08-19, airline: Iberia, flight: IB 1193, from: MAD, to: TLS, cabin: Economy, duration: 1h 13m }
+- { date: 2025-08-19, airline: Iberia, flight: IB 596, from: NCE, to: MAD, aircraft: Airbus A320neo, cabin: Economy, seat: 12A, duration: 1h 56m }
+- { date: 2025-08-10, airline: Finnair, flight: AY 1571, from: HEL, to: CDG, aircraft: Airbus A321, cabin: Economy, seat: 17F, duration: 3h 7m }
+- { date: 2025-08-09, airline: Finnair, flight: AY 88, from: PVG, to: HEL, aircraft: Airbus A350-900, cabin: Premium Economy, seat: 22H, duration: 14h 6m }
+- { date: 2025-05-26, airline: Japan Airlines, flight: JL 85, from: HND, to: PVG, aircraft: Boeing 767-300, cabin: Economy, seat: 49K, duration: 3h 29m }
+- { date: 2025-05-25, airline: American Airlines, flight: AA 169, from: LAX, to: HND, aircraft: Boeing 787-8, cabin: Business, seat: 1L, duration: 11h 34m }
+- { date: 2025-05-24, airline: American Airlines, flight: AA 117, from: JFK, to: LAX, aircraft: Airbus A321, cabin: Business, seat: 6A, duration: 6h 15m }
+- { date: 2025-03-02, airline: Japan Airlines, flight: JL 6, from: HND, to: JFK, aircraft: Airbus A350-1000, cabin: Business, seat: 9D, duration: 12h 12m }
+- { date: 2025-02-23, airline: Japan Airlines, flight: JL 589, from: HND, to: HKD, aircraft: Boeing 767-300, cabin: Premium Economy, seat: 7A, duration: 1h 46m }
+- { date: 2025-02-23, airline: Japan Airlines, flight: JL 80, from: PVG, to: HND, aircraft: Boeing 777-300ER, cabin: Business, seat: 2G, duration: 2h 25m }
+- { date: 2025-02-16, airline: Japan Airlines, flight: JL 89, from: HND, to: PVG, aircraft: Boeing 777-300ER, cabin: Business, duration: 3h 41m }
+- { date: 2025-02-15, airline: American Airlines, flight: AA 167, from: JFK, to: HND, aircraft: Boeing 787-9, cabin: Economy, duration: 14h 10m }
+- { date: 2025-01-05, airline: American Airlines, flight: AA 1550, from: DFW, to: LGA, aircraft: Boeing 737-800, cabin: Economy, seat: 28F, duration: 3h 55m }
+- { date: 2025-01-04, airline: American Airlines, flight: AA 128, from: PVG, to: DFW, aircraft: Boeing 787-8, cabin: Economy, seat: 20A, duration: 13h 6m }
 
-- date: 2025-12-18
-  airline: Example Air
-  flight: EX88
-  from: JFK
-  to: ICN
-  aircraft: Airbus A380
-  cabin: Premium Economy
-  duration: 15h 10m
-  sample: true
+# 2024
+- { date: 2024-12-21, airline: KLM, flight: KL 895, from: AMS, to: PVG, aircraft: Boeing 777-200, cabin: Economy, seat: 35K, duration: 12h 21m }
+- { date: 2024-12-20, airline: KLM, flight: KL 644, from: JFK, to: AMS, aircraft: Boeing 787-10, cabin: Economy, seat: 32A, duration: 7h 3m }
+- { date: 2024-12-01, airline: Delta Air Lines, flight: DL 452, from: SEA, to: JFK, aircraft: Airbus A321neo, cabin: Business, seat: 1A, duration: 5h 24m }
+- { date: 2024-12-01, airline: Starlux Airlines, flight: JX 32, from: TPE, to: SEA, aircraft: Airbus A350-900, cabin: Business, seat: 5A, duration: 10h 26m }
+- { date: 2024-12-01, airline: Starlux Airlines, flight: JX 823, from: KIX, to: TPE, aircraft: Airbus A350-900, cabin: Business, seat: 3A, duration: 3h 13m }
+- { date: 2024-11-24, airline: Japan Airlines, flight: JL 201, from: HND, to: NGO, aircraft: Boeing 737-800, cabin: Economy, seat: 17K, duration: 59m }
+- { date: 2024-11-23, airline: Japan Airlines, flight: JL 3, from: JFK, to: HND, aircraft: Airbus A350-1000, cabin: Economy, seat: 54A, duration: 13h 48m }
+- { date: 2024-09-30, airline: American Airlines, flight: AA 628, from: CLT, to: LGA, aircraft: Airbus A321, cabin: Business, seat: 2A, duration: 1h 37m }
+- { date: 2024-09-30, airline: American Airlines, flight: AA 701, from: ATL, to: CLT, aircraft: Airbus A319, cabin: Business, seat: 2A, duration: 55m }
+- { date: 2024-09-29, airline: American Airlines, flight: AA 2290, from: MIA, to: ATL, aircraft: Boeing 737 MAX 8, cabin: Business, seat: 2F, duration: 1h 48m }
+- { date: 2024-09-29, airline: American Airlines, flight: AA 3063, from: LGA, to: MIA, aircraft: Boeing 737-800, cabin: Business, seat: 2F, duration: 3h 7m }
+- { date: 2024-08-21, airline: Icelandair, flight: FI 619, from: KEF, to: JFK, aircraft: Boeing 737 MAX 8, cabin: Economy, seat: 15A, duration: 5h 50m }
+- { date: 2024-08-15, airline: SAS, flight: SK 4787, from: OSL, to: KEF, aircraft: Airbus A320neo, cabin: Premium Economy, seat: 5A, duration: 2h 51m }
+- { date: 2024-08-15, airline: SAS, flight: SK 1313, from: AES, to: OSL, aircraft: Airbus A320neo, cabin: Premium Economy, seat: 1A, duration: 56m }
+- { date: 2024-08-07, airline: SAS, flight: SK 4184, from: SVG, to: BGO, aircraft: Bombardier CRJ900, cabin: Economy, seat: 24A, duration: 35m }
+- { date: 2024-08-05, airline: Lufthansa, flight: LH 894, from: FRA, to: SVG, aircraft: Airbus A321, cabin: Economy, duration: 1h 38m }
+- { date: 2024-08-05, airline: Lufthansa, flight: LH 729, from: PVG, to: FRA, aircraft: Airbus A340-600, cabin: Premium Economy, seat: 28A, duration: 13h 54m }
+- { date: 2024-07-05, airline: Air China, flight: CA 406, from: NGO, to: PVG, aircraft: Airbus A321, cabin: Economy, seat: 22L, duration: 2h 13m }
+- { date: 2024-06-28, airline: Air China, flight: CA 929, from: PVG, to: NRT, aircraft: Airbus A350-900, cabin: Premium Economy, seat: 31A, duration: 3h 59m }
+- { date: 2024-02-16, airline: Japan Airlines, flight: JL 85, from: HND, to: PVG, aircraft: Boeing 787-8, cabin: Business, seat: 3K, duration: 3h 13m }
+- { date: 2024-02-16, airline: Japan Airlines, flight: JL 504, from: CTS, to: HND, aircraft: Boeing 787-8, cabin: First, seat: 1K, duration: 2h 12m }
+- { date: 2024-02-08, airline: Japan Airlines, flight: JL 511, from: HND, to: CTS, aircraft: Airbus A350-900, cabin: Premium Economy, seat: 9K, duration: 1h 34m }
+- { date: 2024-02-06, airline: Japan Airlines, flight: JL 80, from: PVG, to: HND, aircraft: Boeing 787-8, cabin: Business, seat: 7A, duration: 2h 23m }
 
-- date: 2025-12-19
-  airline: Example Air
-  flight: EX89
-  from: ICN
-  to: PVG
-  aircraft: Airbus A321
-  cabin: Economy
-  duration: 1h 55m
-  sample: true
+# 2023
+- { date: 2023-11-11, airline: Lufthansa, flight: LH 728, from: FRA, to: PVG, aircraft: Boeing 747-8, cabin: First, seat: 3A, duration: 11h 41m }
+- { date: 2023-11-10, airline: United Airlines, flight: UA 74, from: EWR, to: FRA, aircraft: Boeing 767-300, cabin: Business, seat: 8A, duration: 7h 5m }
+- { date: 2023-11-09, airline: United Airlines, flight: UA 208, from: ATL, to: EWR, aircraft: Boeing 737-800, cabin: Economy, seat: 30F, duration: 2h 18m }
+- { date: 2023-11-08, airline: United Airlines, flight: UA 2081, from: IAD, to: ATL, aircraft: Boeing 737-700, cabin: Economy, seat: 28A, duration: 1h 47m }
+- { date: 2023-11-07, airline: United Airlines, flight: UA 650, from: BDL, to: IAD, aircraft: Boeing 737-800, cabin: Economy, seat: 29A, duration: 1h 16m }
+- { date: 2023-11-04, airline: Lufthansa, flight: LH 424, from: MUC, to: BOS, aircraft: Airbus A340-600, cabin: Economy, seat: 48A, duration: 8h 34m }
+- { date: 2023-11-04, airline: Lufthansa, flight: LH 727, from: PVG, to: MUC, aircraft: Airbus A350-900, cabin: Economy, seat: 19A, duration: 13h 15m }
+- { date: 2023-10-03, airline: China Eastern, flight: MU 5358, from: SZX, to: SHA, aircraft: Boeing 737-800, cabin: Business, seat: 6C, duration: 2h 19m }
+- { date: 2023-09-28, airline: China Eastern, flight: MU 5355, from: SHA, to: SZX, aircraft: Airbus A320, cabin: Business, seat: 6L, duration: 2h 16m }
+- { date: 2023-08-06, airline: ANA, flight: NH 967, from: HND, to: PVG, aircraft: Boeing 787-8, cabin: Economy, seat: 12K, duration: 2h 51m }
+- { date: 2023-08-05, airline: Air Canada, flight: AC 1, from: YYZ, to: HND, aircraft: Boeing 787-8, cabin: Business, seat: 2K, duration: 13h 5m }
+- { date: 2023-08-05, airline: Air Canada, flight: AC 8591, from: BDL, to: YYZ, aircraft: Bombardier CRJ200, cabin: Economy, seat: 5F, duration: 1h 44m }
+- { date: 2023-07-01, airline: Air Canada, flight: AC 8696, from: YYZ, to: BOS, aircraft: Embraer 175, cabin: Business, seat: 4F, duration: 2h }
+- { date: 2023-06-30, airline: Air Canada, flight: AC 2, from: HND, to: YYZ, aircraft: Boeing 787-8, cabin: Premium Economy, seat: 12A, duration: 12h 10m }
+- { date: 2023-06-30, airline: ANA, flight: NH 968, from: PVG, to: HND, aircraft: Boeing 787-8, cabin: Economy, seat: 19K, duration: 2h 45m }
+- { date: 2023-06-22, airline: Cathay Pacific, flight: CX 364, from: HKG, to: PVG, aircraft: Airbus A330-300, cabin: Economy, seat: 69A, duration: 2h 28m }
+- { date: 2023-06-19, airline: Cathay Pacific, flight: CX 369, from: PVG, to: HKG, aircraft: Airbus A330-300, cabin: Economy, seat: 62A, duration: 2h 30m }
+- { date: 2023-01-31, airline: China Southern, flight: CZ 6373, from: CGQ, to: PVG, aircraft: Airbus A321, cabin: Economy, duration: 2h 37m }
+- { date: 2023-01-25, airline: China Southern, flight: CZ 6542, from: PVG, to: CGQ, aircraft: Airbus A321, cabin: Economy, duration: 2h 45m }
 
-- date: 2025-08-25
-  airline: Sample Airways
-  flight: SA101
-  from: PVG
-  to: JFK
-  aircraft: Boeing 777-300ER
-  cabin: Economy
-  duration: 14h 25m
-  sample: true
+# 2022
+- { date: 2022-08-13, airline: China Eastern, flight: MU 9743, from: KMG, to: PVG, aircraft: Boeing 737-700, cabin: Economy, duration: 3h 20m }
+- { date: 2022-08-13, airline: China Eastern, flight: MU 9743, from: DIG, to: KMG, aircraft: Boeing 737-700, cabin: Economy, duration: 1h 14m }
+- { date: 2022-08-01, airline: China Eastern, flight: MU 9726, from: SHA, to: DLU, aircraft: Boeing 737-700, cabin: Economy, duration: 3h 24m }
+- { date: 2022-01-30, airline: China Eastern, flight: MU 9992, from: MFM, to: PVG, aircraft: Airbus A321, cabin: Economy, duration: 2h 17m }
+- { date: 2022-01-27, airline: Shanghai Airlines, flight: FM 875, from: PVG, to: MFM, aircraft: Boeing 737-800, duration: 2h 26m }
+
+# 2021
+- { date: 2021-07-23, airline: China Eastern, flight: MU 5634, from: URC, to: SHA, aircraft: Airbus A330-200, cabin: Business, duration: 4h 49m }
+- { date: 2021-07-21, airline: Joy Air, flight: JR 1607, from: KJI, to: FYN, cabin: Economy, duration: 1h 5m }
+- { date: 2021-07-18, airline: China Southern, flight: CZ 6835, from: YIN, to: AAT, aircraft: Boeing 737-700, cabin: Economy, duration: 1h 3m }
+- { date: 2021-07-11, airline: Shanghai Airlines, flight: FM 9221, from: PVG, to: URC, aircraft: Boeing 737-800, duration: 4h 51m }
+- { date: 2021-01-26, airline: Spring Airlines, flight: 9C 8532, from: NBS, to: PVG, aircraft: Airbus A320, cabin: Economy, duration: 2h 54m }
+- { date: 2021-01-19, airline: Spring Airlines, flight: 9C 8531, from: PVG, to: NBS, aircraft: Airbus A320, cabin: Economy, duration: 2h 55m }
+
+# 2020
+- { date: 2020-02-07, airline: AirAsia X, flight: D7 332, from: KUL, to: PVG, aircraft: Airbus A330-300, cabin: Economy, duration: 4h 58m }
+- { date: 2020-02-07, airline: AirAsia X, flight: D7 793, from: DPS, to: KUL, aircraft: Airbus A330-300, cabin: Economy, duration: 2h 50m }
+- { date: 2020-01-31, airline: China Eastern, flight: MU 781, from: PEK, to: DPS, aircraft: Airbus A330-300, cabin: Business, duration: 7h 51m }
+- { date: 2020-01-31, airline: China Eastern, flight: MU 5107, from: SHA, to: PEK, aircraft: Airbus A321, cabin: Business, duration: 2h 30m }
+- { date: 2020-01-29, airline: China Eastern, flight: MU 2176, from: ZQZ, to: PVG, aircraft: Airbus A320neo, cabin: Economy, duration: 2h 24m }
+- { date: 2020-01-26, airline: China Eastern, flight: MU 2175, from: PVG, to: ZQZ, aircraft: Airbus A320neo, cabin: Economy, duration: 2h 48m }
+
+# 2019
+- { date: 2019-08-19, airline: Qantas, flight: QF 129, from: SYD, to: PVG, aircraft: Airbus A330-300, cabin: Economy, duration: 11h 20m }
+- { date: 2019-08-15, airline: Qantas, flight: QF 791, from: ASP, to: SYD, aircraft: Boeing 737-800, cabin: Business, duration: 2h 34m }
+- { date: 2019-08-09, airline: Qantas, flight: QF 796, from: MEL, to: ASP, aircraft: Boeing 737-800, cabin: Business, duration: 2h 56m }
+- { date: 2019-08-08, airline: Qantas, flight: QF 2284, from: LST, to: MEL, aircraft: Dash 8-400, cabin: Economy, duration: 1h 11m }
+- { date: 2019-08-04, airline: Qantas, flight: QF 1013, from: MEL, to: HBA, aircraft: Boeing 737-800, cabin: Economy, duration: 1h 9m }
+- { date: 2019-07-29, airline: Air China, flight: CA 165, from: PEK, to: MEL, aircraft: Airbus A330-300, cabin: Business, duration: 11h 50m }
+- { date: 2019-07-28, airline: Air China, flight: CA 1522, from: SHA, to: PEK, aircraft: Boeing 777-300ER, cabin: Business, duration: 2h 54m }
+- { date: 2019-02-13, airline: Spring Airlines, flight: 9C 8532, from: NBS, to: PVG, aircraft: Airbus A320, cabin: Economy, duration: 2h 52m }
+- { date: 2019-02-10, airline: Spring Airlines, flight: 9C 8531, from: PVG, to: NBS, aircraft: Airbus A320, cabin: Economy, duration: 2h 47m }
+- { date: 2019-02-04, airline: Spring Airlines, flight: 9C 8952, from: TPE, to: PVG, aircraft: Airbus A320, cabin: Economy, duration: 1h 47m }
+- { date: 2019-01-28, airline: Cathay Dragon, flight: KA 482, from: HKG, to: TPE, aircraft: Airbus A321, cabin: Economy, duration: 1h 45m }
+- { date: 2019-01-28, airline: Cathay Dragon, flight: KA 865, from: PVG, to: HKG, aircraft: Airbus A321, cabin: Economy, duration: 2h 53m }
+
+# 2018
+- { date: 2018-02-12, airline: Japan Airlines, flight: JL 85, from: HND, to: PVG, aircraft: Boeing 777-200, cabin: Business, duration: 3h 36m }
+- { date: 2018-02-12, airline: Japan Airlines, flight: JL 504, from: CTS, to: HND, aircraft: Boeing 777-300, cabin: Economy, duration: 1h 44m }
+- { date: 2018-02-05, airline: Japan Airlines, flight: JL 511, from: HND, to: CTS, aircraft: Boeing 777-200, cabin: Economy, duration: 1h 43m }
+- { date: 2018-02-04, airline: Japan Airlines, flight: JL 872, from: PVG, to: NRT, aircraft: Boeing 787-8, cabin: Business, duration: 2h 32m }
+
+# 2017
+- { date: 2017-08-23, airline: Air China, flight: CA 1857, from: PEK, to: SHA, aircraft: Boeing 777-300ER, duration: 3h 59m }
+- { date: 2017-08-22, airline: Air China, flight: CA 992, from: YVR, to: PEK, aircraft: Boeing 777-300ER, duration: 10h 29m }
+- { date: 2017-08-22, airline: Air Canada, flight: AC 211, from: YYC, to: YVR, aircraft: Airbus A319, duration: 1h 25m }
+- { date: 2017-08-10, airline: WestJet, flight: WS 146, from: YVR, to: YYC, aircraft: Boeing 737-800, duration: 1h 22m }
+- { date: 2017-08-10, airline: Air China, flight: CA 991, from: PEK, to: YVR, aircraft: Boeing 777-300ER, duration: 12h 9m }
+- { date: 2017-08-09, airline: Air China, flight: CA 1590, from: SHA, to: PEK, aircraft: Boeing 787-9, duration: 7h 43m }
+- { date: 2017-01-28, airline: ANA, flight: NH 971, from: HND, to: PVG, aircraft: Boeing 787-8, duration: 3h 23m }
+- { date: 2017-01-28, airline: ANA, flight: NH 68, from: CTS, to: HND, aircraft: Boeing 777-200, duration: 1h 40m }
+- { date: 2017-01-22, airline: ANA, flight: NH 67, from: HND, to: CTS, aircraft: Boeing 787-8, duration: 2h 15m }
+- { date: 2017-01-22, airline: ANA, flight: NH 972, from: PVG, to: HND, aircraft: Boeing 787-8, duration: 2h 23m }
+
+# 2016
+- { date: 2016-08-19, airline: Lufthansa, flight: LH 728, from: FRA, to: PVG, aircraft: Airbus A380, cabin: Economy, duration: 10h 4m }
+- { date: 2016-07-29, airline: Swiss, flight: LX 1583, from: VIE, to: ZRH, aircraft: Airbus A340-300, cabin: Economy, duration: 1h 13m }
+- { date: 2016-07-29, airline: Austrian Airlines, flight: OS 76, from: PVG, to: VIE, aircraft: Boeing 777-200, cabin: Economy, duration: 11h 15m }
+- { date: 2016-02-11, airline: Spring Airlines, flight: 9C 8836, from: CAN, to: SHA, aircraft: Airbus A320, cabin: Economy, duration: 2h 9m }
+- { date: 2016-02-06, airline: Spring Airlines, flight: 9C 8855, from: SHA, to: CAN, aircraft: Airbus A320, cabin: Economy, duration: 2h 35m }
+
+# 2015
+- { date: 2015-12-07, airline: Spring Airlines, flight: 9C 8532, from: NBS, to: PVG, aircraft: Airbus A320, cabin: Economy, duration: 2h 37m }
+- { date: 2015-12-04, airline: Spring Airlines, flight: 9C 8531, from: PVG, to: NBS, aircraft: Airbus A320, cabin: Economy, duration: 2h 32m }
+- { date: 2015-07-23, airline: Delta Air Lines, flight: DL 589, from: SEA, to: PVG, aircraft: Airbus A330-200, cabin: Economy, duration: 12h 24m }
+- { date: 2015-07-23, airline: Delta Air Lines, flight: DL 1905, from: LAX, to: SEA, aircraft: Boeing 737-800, cabin: Economy, duration: 3h 7m }
+- { date: 2015-07-10, airline: Delta Air Lines, flight: DL 2375, from: SLC, to: SFO, cabin: Economy, duration: 1h 57m }
+- { date: 2015-07-04, airline: Delta Air Lines, flight: DL 346, from: SEA, to: SLC, aircraft: Boeing 737-800, cabin: Economy, duration: 1h 47m }
+- { date: 2015-07-04, airline: Delta Air Lines, flight: DL 588, from: PVG, to: SEA, aircraft: Airbus A330-200, cabin: Economy, duration: 10h 28m }
+
+# 2014
+- { date: 2014-12-11, airline: Spring Airlines, flight: 9C 8842, from: NBS, to: PVG, aircraft: Airbus A320, cabin: Economy, duration: 2h 41m }
+- { date: 2014-12-07, airline: Spring Airlines, flight: 9C 8841, from: PVG, to: NBS, aircraft: Airbus A320, duration: 2h 30m }
+- { date: 2014-03-07, airline: Korean Air, flight: KE 895, from: ICN, to: PVG, aircraft: Boeing 737-900, cabin: Economy, duration: 2h 14m }
+- { date: 2014-03-03, airline: Korean Air, flight: KE 894, from: PVG, to: ICN, aircraft: Boeing 777-200, cabin: Economy, duration: 2h 14m }
+
+# 2013
+- { date: 2013-04-04, airline: Air China, flight: CA 920, from: NRT, to: PVG, cabin: Economy, duration: 2h 41m }
+- { date: 2013-03-28, airline: Air China, flight: CA 919, from: PVG, to: NRT, aircraft: Airbus A319, cabin: Economy, duration: 2h 20m }
+
+# 2011
+- { date: 2011-07-04, airline: Singapore Airlines, flight: SQ 830, from: SIN, to: PVG, aircraft: Boeing 777-300, cabin: Economy, duration: 5h 16m }
+- { date: 2011-07-03, airline: Singapore Airlines, flight: SQ 451, from: MLE, to: SIN, aircraft: Airbus A330-300, cabin: Economy, duration: 4h 34m }
+- { date: 2011-06-29, airline: Singapore Airlines, flight: SQ 452, from: SIN, to: MLE, aircraft: Airbus A330-300, cabin: Economy, duration: 4h 25m }
+- { date: 2011-06-29, airline: Singapore Airlines, flight: SQ 831, from: PVG, to: SIN, aircraft: Boeing 777-200, cabin: Economy, duration: 5h 10m }
+
+# 2010
+- { date: 2010-03-10, airline: Juneyao Air, flight: HO 1208, from: SYX, to: PVG, aircraft: Airbus A320, cabin: Economy, duration: 2h 45m }
+- { date: 2010-03-07, airline: Juneyao Air, flight: HO 1209, from: PVG, to: SYX, aircraft: Airbus A320, cabin: Economy, duration: 3h 10m }

@@ -7,13 +7,45 @@ import { getAirport } from '../data/airports';
 const flights = getFlights();
 const s = getStats(flights);
 
-const breakdowns = [
-  { title: 'Routes', note: 'Both directions together', rows: s.routes.map((r) => ({ name: `${r.a} – ${r.b}`, sub: `${getAirport(r.a).city} and ${getAirport(r.b).city}`, count: r.count })) },
-  { title: 'Airlines', rows: s.airlines.map((r) => ({ ...r, sub: undefined })) },
-  { title: 'Aircraft', rows: s.aircraft.map((r) => ({ ...r, sub: undefined })) },
-  { title: 'Cabins', rows: s.cabins.map((r) => ({ ...r, sub: undefined })) },
-  { title: 'By year', rows: s.years.map((r) => ({ ...r, sub: undefined })) },
+type Row = { name: string; sub?: string; count: number };
+const breakdowns: { title: string; note?: string; rows: Row[]; limit: number }[] = [
+  {
+    title: 'Routes',
+    note: 'Both directions together',
+    rows: s.routes.map((r) => ({ name: `${r.a} – ${r.b}`, sub: `${getAirport(r.a).city} and ${getAirport(r.b).city}`, count: r.count })),
+    limit: 8,
+  },
+  {
+    title: 'Airports',
+    note: 'Takeoffs and landings',
+    rows: s.topAirports.map((r) => {
+      const ap = getAirport(r.name);
+      return { ...r, sub: ap.city === ap.country ? ap.city : `${ap.city}, ${ap.country}` };
+    }),
+    limit: 8,
+  },
+  { title: 'Airlines', rows: s.airlines, limit: 8 },
+  { title: 'Aircraft', rows: s.aircraft, limit: 8 },
+  { title: 'Cabins', rows: s.cabins, limit: 8 },
 ].filter((b) => b.rows.length > 0);
+
+// The flight table, one group per year, newest first.
+const byYear = s.years.map((y) => ({
+  year: y.name,
+  flights: flights.filter((f) => String(f.date.getUTCFullYear()) === y.name),
+}));
+const labelCodes = s.topAirports.slice(0, 12).map((a) => a.name);
+
+// Flights per year as columns, including any years with no flights.
+const yearCounts = new Map(s.years.map((y) => [Number(y.name), y.count]));
+const lastYear = Math.max(...yearCounts.keys());
+const perYear = s.firstYear
+  ? Array.from({ length: lastYear - s.firstYear + 1 }, (_, i) => {
+      const year = s.firstYear! + i;
+      return { year, count: yearCounts.get(year) ?? 0 };
+    })
+  : [];
+const yearMax = Math.max(1, ...perYear.map((y) => y.count));
 
 const shortDate = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
@@ -26,7 +58,8 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
       {
         s.count > 0 ? (
           <p class="totals">
-            {fmt(s.count)} {s.count === 1 ? 'flight' : 'flights'} and {fmt(s.km)} km ({fmt(s.miles)} miles) in the air so far
+            {fmt(s.count)} {s.count === 1 ? 'flight' : 'flights'}
+            {s.firstYear && <> since {s.firstYear}</>} and {fmt(s.km)} km ({fmt(s.miles)} miles) in the air
             {laps ? <>, enough to go around the Earth {laps} times.</> : '.'}
           </p>
         ) : (
@@ -39,7 +72,7 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
     {
       s.count > 0 && (
         <div class="overview">
-        <RouteMap routes={s.routes} airports={s.airports} animate class="map" />
+        <RouteMap routes={s.routes} airports={s.airports} labelCodes={labelCodes} animate interactive class="map" />
         <dl class="facts">
           {s.minutes > 0 && (
             <div>
@@ -84,7 +117,7 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
                 <h2 id={`bd-${b.title}`}>{b.title}</h2>
                 {b.note && <p class="bd-note">{b.note}</p>}
                 <ol class="bars">
-                  {b.rows.slice(0, 8).map((r) => (
+                  {b.rows.slice(0, b.limit).map((r) => (
                     <li>
                       <span class="bar-name">
                         {r.name}
@@ -97,7 +130,7 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
                     </li>
                   ))}
                 </ol>
-                {b.rows.length > 8 && <p class="bd-note">and {b.rows.length - 8} more</p>}
+                {b.rows.length > b.limit && <p class="bd-note">and {b.rows.length - b.limit} more</p>}
               </section>
             );
           })}
@@ -106,46 +139,76 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
     }
 
     {
+      perYear.length > 1 && (
+        <section class="per-year" aria-labelledby="per-year-h">
+          <h2 id="per-year-h">Flights per year</h2>
+          <ol class="columns" style={`--n:${perYear.length}`}>
+            {perYear.map((y) => (
+              <li title={`${y.year}: ${y.count} ${y.count === 1 ? 'flight' : 'flights'}`}>
+                <span class="col-plot">
+                  <span class="col-count">{y.count || ''}</span>
+                  <span class="col-bar" style={`height: ${(y.count / yearMax) * 82}%`} />
+                </span>
+                <span class="col-year">
+                  <span class="full">{y.year}</span>
+                  <span class="short" aria-hidden="true">’{String(y.year).slice(2)}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )
+    }
+
+    {
       s.count > 0 && (
         <section class="log" aria-labelledby="all-flights">
           <h2 id="all-flights">Every flight</h2>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Flight</th>
-                  <th scope="col">Route</th>
-                  <th scope="col">Aircraft</th>
-                  <th scope="col">Cabin</th>
-                  <th scope="col" class="num">Distance</th>
-                  <th scope="col" class="num">Time</th>
-                  <th scope="col"><span class="visually-hidden">Review</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {flights.map((f) => (
+          {byYear.map((group, gi) => (
+            <details class="year" open={gi === 0}>
+              <summary>
+                <span class="year-name">{group.year}</span>
+                <span class="year-count">
+                  {group.flights.length} {group.flights.length === 1 ? 'flight' : 'flights'}
+                </span>
+              </summary>
+              <table>
+                <thead>
                   <tr>
-                    <td class="date" data-label="Date">{shortDate(f.date)}</td>
-                    <td data-label="Flight">
-                      {f.airline}
-                      {f.flight && <span class="code"> {f.flight}</span>}
-                    </td>
-                    <td class="route" data-label="Route">
-                      <span title={`${getAirport(f.from).city} to ${getAirport(f.to).city}`}>
-                        {f.from} – {f.to}
-                      </span>
-                    </td>
-                    <td data-label="Aircraft">{f.aircraft ?? ''}</td>
-                    <td data-label="Cabin">{f.cabin ?? ''}{f.seat && <span class="fine">, seat {f.seat}</span>}</td>
-                    <td class="num" data-label="Distance">{fmt(Math.round(f.km))} km</td>
-                    <td class="num" data-label="Time">{f.minutes !== undefined ? formatMinutes(f.minutes) : ''}</td>
-                    <td class="rev">{f.review && <a href={`/reviews/${f.review}/`}>Read review</a>}</td>
+                    <th scope="col">Date</th>
+                    <th scope="col">Flight</th>
+                    <th scope="col">Route</th>
+                    <th scope="col">Aircraft</th>
+                    <th scope="col">Cabin</th>
+                    <th scope="col" class="num">Distance</th>
+                    <th scope="col" class="num">Time</th>
+                    <th scope="col"><span class="visually-hidden">Review</span></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {group.flights.map((f) => (
+                    <tr>
+                      <td class="date" data-label="Date">{shortDate(f.date)}</td>
+                      <td data-label="Flight">
+                        {f.airline}
+                        {f.flight && <span class="code"> {f.flight}</span>}
+                      </td>
+                      <td class="route" data-label="Route">
+                        <span title={`${getAirport(f.from).city} to ${getAirport(f.to).city}`}>
+                          {f.from} – {f.to}
+                        </span>
+                      </td>
+                      <td data-label="Aircraft">{f.aircraft ?? ''}</td>
+                      <td data-label="Cabin">{f.cabin ?? ''}{f.seat && <span class="fine">, seat {f.seat}</span>}</td>
+                      <td class="num" data-label="Distance">{fmt(Math.round(f.km))} km</td>
+                      <td class="num" data-label="Time">{f.minutes !== undefined ? formatMinutes(f.minutes) : ''}</td>
+                      <td class="rev">{f.review && <a href={`/reviews/${f.review}/`}>Read review</a>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </details>
+          ))}
         </section>
       )
     }
@@ -290,12 +353,136 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
     border-radius: 0 3px 3px 0;
   }
 
-  .log {
+  .log,
+  .per-year {
     margin-top: 4rem;
   }
 
-  .table-wrap {
-    margin-top: 0.5rem;
+  .per-year h2 {
+    font-size: var(--step-2);
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .columns {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    gap: 6px;
+    height: 13rem;
+    align-items: stretch;
+  }
+
+  .columns li {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .col-plot {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .col-count {
+    font-size: var(--step--1);
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    padding-bottom: 0.25rem;
+  }
+
+  .col-bar {
+    display: block;
+    width: 100%;
+    max-width: 2.6rem;
+    background: var(--blue);
+    border-radius: 3px 3px 0 0;
+  }
+
+  .col-year {
+    font-size: var(--step--1);
+    color: var(--muted);
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--rule);
+    width: 100%;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .col-year .short {
+    display: none;
+  }
+
+  @media (max-width: 48rem) {
+    .columns {
+      gap: 3px;
+    }
+    .col-year .full {
+      display: none;
+    }
+    .col-year .short {
+      display: inline;
+    }
+    .col-count {
+      font-size: 0.7rem;
+    }
+  }
+
+  .year {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .year summary {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 1rem 0;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .year summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .year summary::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: translateY(-0.15rem) rotate(-45deg);
+    transition: transform 0.15s ease;
+  }
+
+  .year[open] summary::before {
+    transform: translateY(-0.3rem) rotate(45deg);
+  }
+
+  .year-name {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    color: var(--ink);
+  }
+
+  .year-count {
+    color: var(--muted);
+    font-size: var(--step--1);
+  }
+
+  .year table {
+    margin-bottom: 1.25rem;
+  }
+
+  .year tr:last-child td {
+    border-bottom: 0;
   }
 
   table {

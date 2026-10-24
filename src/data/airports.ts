@@ -29,6 +29,17 @@ export const AIRPORTS: Record<string, Airport> = {
   KMG: { name: 'Changshui', city: 'Kunming', country: 'China', lat: 25.1019, lon: 102.9292 },
   SYX: { name: 'Phoenix', city: 'Sanya', country: 'China', lat: 18.3029, lon: 109.4122 },
 
+  CGQ: { name: 'Longjia', city: 'Changchun', country: 'China', lat: 43.9962, lon: 125.685 },
+  NBS: { name: 'Changbaishan', city: 'Baishan', country: 'China', lat: 42.0667, lon: 127.6022 },
+  ZQZ: { name: 'Ningyuan', city: 'Zhangjiakou', country: 'China', lat: 40.7386, lon: 114.93 },
+  DLU: { name: 'Dali', city: 'Dali', country: 'China', lat: 25.6494, lon: 100.3194 },
+  DIG: { name: 'Shangri-La', city: 'Diqing', country: 'China', lat: 27.7936, lon: 99.6772 },
+  URC: { name: 'Diwopu', city: 'Ürümqi', country: 'China', lat: 43.9071, lon: 87.4742 },
+  YIN: { name: 'Yining', city: 'Yining', country: 'China', lat: 43.9558, lon: 81.3303 },
+  AAT: { name: 'Altay', city: 'Altay', country: 'China', lat: 47.7499, lon: 88.0858 },
+  KJI: { name: 'Kanas', city: 'Buerjin', country: 'China', lat: 48.2223, lon: 86.9959 },
+  FYN: { name: 'Koktokay', city: 'Fuyun', country: 'China', lat: 46.8042, lon: 89.512 },
+
   // Hong Kong, Macau, Taiwan
   HKG: { name: 'Hong Kong Intl', city: 'Hong Kong', country: 'Hong Kong', lat: 22.308, lon: 113.9185 },
   MFM: { name: 'Macau Intl', city: 'Macau', country: 'Macau', lat: 22.1496, lon: 113.5915 },
@@ -43,6 +54,22 @@ export const AIRPORTS: Record<string, Airport> = {
   SIN: { name: 'Changi', city: 'Singapore', country: 'Singapore', lat: 1.3644, lon: 103.9915 },
   BKK: { name: 'Suvarnabhumi', city: 'Bangkok', country: 'Thailand', lat: 13.69, lon: 100.7501 },
 
+  NGO: { name: 'Chubu Centrair', city: 'Nagoya', country: 'Japan', lat: 34.8584, lon: 136.8054 },
+  CTS: { name: 'New Chitose', city: 'Sapporo', country: 'Japan', lat: 42.7752, lon: 141.6923 },
+  HKD: { name: 'Hakodate', city: 'Hakodate', country: 'Japan', lat: 41.77, lon: 140.8219 },
+  OKA: { name: 'Naha', city: 'Okinawa', country: 'Japan', lat: 26.1958, lon: 127.646 },
+  MMY: { name: 'Miyako', city: 'Miyako', country: 'Japan', lat: 24.7828, lon: 125.295 },
+  KUL: { name: 'Kuala Lumpur Intl', city: 'Kuala Lumpur', country: 'Malaysia', lat: 2.7456, lon: 101.7099 },
+  DPS: { name: 'Ngurah Rai', city: 'Bali', country: 'Indonesia', lat: -8.7482, lon: 115.167 },
+  MLE: { name: 'Velana', city: 'Malé', country: 'Maldives', lat: 4.1918, lon: 73.5291 },
+
+  // Australia
+  SYD: { name: 'Kingsford Smith', city: 'Sydney', country: 'Australia', lat: -33.9399, lon: 151.1753 },
+  MEL: { name: 'Tullamarine', city: 'Melbourne', country: 'Australia', lat: -37.669, lon: 144.841 },
+  ASP: { name: 'Alice Springs', city: 'Alice Springs', country: 'Australia', lat: -23.8067, lon: 133.9022 },
+  HBA: { name: 'Hobart', city: 'Hobart', country: 'Australia', lat: -42.8361, lon: 147.5103 },
+  LST: { name: 'Launceston', city: 'Launceston', country: 'Australia', lat: -41.5453, lon: 147.2142 },
+
   // Middle East, Europe
   DXB: { name: 'Dubai Intl', city: 'Dubai', country: 'UAE', lat: 25.2532, lon: 55.3657 },
   DOH: { name: 'Hamad', city: 'Doha', country: 'Qatar', lat: 25.2731, lon: 51.6081 },
@@ -55,11 +82,26 @@ export const AIRPORTS: Record<string, Airport> = {
   ZRH: { name: 'Zurich', city: 'Zurich', country: 'Switzerland', lat: 47.4582, lon: 8.5555 },
   HEL: { name: 'Helsinki-Vantaa', city: 'Helsinki', country: 'Finland', lat: 60.3172, lon: 24.9633 },
 
+  FCO: { name: 'Fiumicino', city: 'Rome', country: 'Italy', lat: 41.8003, lon: 12.2389 },
+  FLR: { name: 'Peretola', city: 'Florence', country: 'Italy', lat: 43.81, lon: 11.2051 },
+  BCN: { name: 'El Prat', city: 'Barcelona', country: 'Spain', lat: 41.2974, lon: 2.0833 },
+  MAD: { name: 'Barajas', city: 'Madrid', country: 'Spain', lat: 40.4983, lon: -3.5676 },
+  TLS: { name: 'Blagnac', city: 'Toulouse', country: 'France', lat: 43.6291, lon: 1.3638 },
+  NCE: { name: "Côte d'Azur", city: 'Nice', country: 'France', lat: 43.6584, lon: 7.2159 },
+  VIE: { name: 'Vienna Intl', city: 'Vienna', country: 'Austria', lat: 48.1103, lon: 16.5697 },
+  OSL: { name: 'Gardermoen', city: 'Oslo', country: 'Norway', lat: 60.1976, lon: 11.1004 },
+  BGO: { name: 'Flesland', city: 'Bergen', country: 'Norway', lat: 60.2934, lon: 5.2181 },
+  SVG: { name: 'Sola', city: 'Stavanger', country: 'Norway', lat: 58.8767, lon: 5.6378 },
+  AES: { name: 'Vigra', city: 'Ålesund', country: 'Norway', lat: 62.5625, lon: 6.1197 },
+  KEF: { name: 'Keflavík', city: 'Reykjavík', country: 'Iceland', lat: 63.985, lon: -22.6056 },
+
   // New York area
   JFK: { name: 'John F. Kennedy', city: 'New York', country: 'USA', lat: 40.6413, lon: -73.7781 },
   EWR: { name: 'Newark Liberty', city: 'Newark', country: 'USA', lat: 40.6895, lon: -74.1745 },
   LGA: { name: 'LaGuardia', city: 'New York', country: 'USA', lat: 40.7769, lon: -73.874 },
   ISP: { name: 'Long Island MacArthur', city: 'Islip', country: 'USA', lat: 40.7952, lon: -73.1002 },
+
+  BDL: { name: 'Bradley', city: 'Hartford', country: 'USA', lat: 41.9389, lon: -72.6832 },
 
   // Rest of North America
   BOS: { name: 'Logan', city: 'Boston', country: 'USA', lat: 42.3656, lon: -71.0096 },
@@ -83,6 +125,10 @@ export const AIRPORTS: Record<string, Airport> = {
   SEA: { name: 'Seattle-Tacoma', city: 'Seattle', country: 'USA', lat: 47.4502, lon: -122.3088 },
   ANC: { name: 'Ted Stevens', city: 'Anchorage', country: 'USA', lat: 61.1743, lon: -149.9963 },
   HNL: { name: 'Daniel K. Inouye', city: 'Honolulu', country: 'USA', lat: 21.3245, lon: -157.9251 },
+  PIT: { name: 'Pittsburgh', city: 'Pittsburgh', country: 'USA', lat: 40.4915, lon: -80.2329 },
+  CLT: { name: 'Charlotte Douglas', city: 'Charlotte', country: 'USA', lat: 35.214, lon: -80.9431 },
+  SLC: { name: 'Salt Lake City', city: 'Salt Lake City', country: 'USA', lat: 40.7899, lon: -111.9791 },
+  YYC: { name: 'Calgary', city: 'Calgary', country: 'Canada', lat: 51.1215, lon: -114.0076 },
   YVR: { name: 'Vancouver', city: 'Vancouver', country: 'Canada', lat: 49.1967, lon: -123.1815 },
   YYZ: { name: 'Pearson', city: 'Toronto', country: 'Canada', lat: 43.6777, lon: -79.6248 },
   MEX: { name: 'Benito Juárez', city: 'Mexico City', country: 'Mexico', lat: 19.4361, lon: -99.0719 },

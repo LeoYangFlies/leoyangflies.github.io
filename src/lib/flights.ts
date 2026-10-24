@@ -43,6 +43,7 @@ export function parseDuration(text?: string): number | undefined {
 export function formatMinutes(min: number): string {
   const h = Math.floor(min / 60);
   const m = min % 60;
+  if (!h) return `${m}m`;
   return m ? `${h}h ${m}m` : `${h}h`;
 }
 
@@ -117,6 +118,9 @@ export function getStats(flights = getFlights()) {
     cabins: countBy(flights, (f) => f.cabin),
     years,
     longest,
+    // Airports by number of visits (takeoffs plus landings), most visited first.
+    topAirports: countBy(flights.flatMap((f) => [f.from, f.to]), (c) => c),
+    firstYear: flights.length ? Math.min(...flights.map((f) => f.date.getUTCFullYear())) : undefined,
     hasSamples: flights.some((f) => f.sample),
   };
 }

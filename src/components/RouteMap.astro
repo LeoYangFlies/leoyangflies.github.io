@@ -1,15 +1,8 @@
 ---
-// A map of every route flown, drawn as great-circle arcs on a globe that turns and zooms
-// to fit wherever the flights go. Rendered to plain SVG when the site is built, so it
-// costs visitors nothing.
-import {
-  geoAzimuthalEquidistant,
-  geoDistance,
-  geoGraticule10,
-  geoInterpolate,
-  geoOrthographic,
-  geoPath,
-} from 'd3-geo';
+// A globe with every route flown, drawn as great-circle arcs. It is rendered to SVG when
+// the site is built, facing wherever the flights are concentrated. With `interactive`,
+// visitors can then drag (or use the arrow keys) to turn it.
+import { geoDistance, geoGraticule10, geoInterpolate, geoOrthographic, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import land110 from 'world-atlas/land-110m.json';
 import { getAirport } from '../data/airports';
@@ -19,103 +12,144 @@ interface Props {
   routes: Route[];
   airports: string[];
   labels?: boolean;
+  /** Only label these airports (e.g. the most visited); all others get a dot. */
+  labelCodes?: string[];
   animate?: boolean;
+  interactive?: boolean;
   class?: string;
 }
 
-const { routes, airports, labels = true, animate = false, class: className } = Astro.props;
+const {
+  routes,
+  airports,
+  labels = true,
+  labelCodes,
+  animate = false,
+  interactive = false,
+  class: className,
+} = Astro.props;
 
-const W = 600;
-const H = 600;
+const SIZE = 600;
+const PAD = 14;
+const rad = Math.PI / 180;
 const uid = Math.random().toString(36).slice(2, 8);
 
-// Every point the drawing has to show: the airports, plus points along each great circle
-// (routes between Asia and North America bend up toward the Arctic).
-const points: [number, number][] = airports.map((c) => [getAirport(c).lon, getAirport(c).lat]);
+// Face the globe toward the middle of all the flying, weighting each route by how often
+// it was flown and sampling along each great circle (long routes bend toward the poles).
+let x = 0,
+  y = 0,
+  z = 0;
+const samples: [number, number][] = [];
 for (const r of routes) {
   const a = getAirport(r.a);
   const b = getAirport(r.b);
   const between = geoInterpolate([a.lon, a.lat], [b.lon, b.lat]);
-  for (let t = 0; t <= 1; t += 0.05) points.push(between(t) as [number, number]);
-}
-
-// Turn the globe to face the middle of the two points farthest apart, so the whole
-// spread of routes sits centred. Limit the tilt so north stays roughly up.
-const rad = Math.PI / 180;
-let pair: [[number, number], [number, number]] = [points[0], points[0]];
-let widest = -1;
-for (const p of points) {
-  for (const q of points) {
-    const d = geoDistance(p, q);
-    if (d > widest) {
-      widest = d;
-      pair = [p, q];
-    }
+  for (let t = 0; t <= 1; t += 0.1) {
+    const [lon, lat] = between(t);
+    samples.push([lon, lat]);
+    x += r.count * Math.cos(lat * rad) * Math.cos(lon * rad);
+    y += r.count * Math.cos(lat * rad) * Math.sin(lon * rad);
+    z += r.count * Math.sin(lat * rad);
   }
 }
-const mid = geoInterpolate(pair[0], pair[1])(0.5);
-const center: [number, number] = [mid[0], Math.max(-55, Math.min(55, mid[1]))];
-const farthest = Math.max(...points.map((p) => geoDistance(center, p))) / rad;
+// Keep the tilt modest so north stays roughly up, like a classroom globe.
+const centerLat = Math.max(-35, Math.min(45, Math.atan2(z, Math.hypot(x, y)) / rad));
+const center: [number, number] = [Math.atan2(y, x) / rad, centerLat];
+const farthest = Math.max(0, ...samples.map((p) => geoDistance(center, p))) / rad;
 
-// A globe (orthographic) reads best. If the routes reach round the back of the Earth,
-// switch to a flattened disc (azimuthal equidistant) that can show the whole world.
-const projection = (farthest < 82 ? geoOrthographic() : geoAzimuthalEquidistant()).rotate([-center[0], -center[1]]);
-const frame: [[number, number], [number, number]] = [
-  [14, 14],
-  [W - 14, H - 14],
-];
-if (farthest < 40) {
+const projection = geoOrthographic().rotate([-center[0], -center[1]]);
+if (farthest < 40 && samples.length) {
   // Regional routes only: zoom in on them, with room around the edges.
   projection.fitExtent(
     [
       [70, 70],
-      [W - 70, H - 70],
+      [SIZE - 70, SIZE - 70],
     ],
-    { type: 'MultiPoint', coordinates: points },
+    { type: 'MultiPoint', coordinates: samples },
   );
-  if (projection.scale() > 2400) projection.scale(2400).translate([W / 2, H / 2]);
+  if (projection.scale() > 2400) projection.scale(2400).translate([SIZE / 2, SIZE / 2]);
 } else {
-  // Long-haul: show the whole globe.
-  projection.fitExtent(frame, { type: 'Sphere' });
+  projection.fitExtent(
+    [
+      [PAD, PAD],
+      [SIZE - PAD, SIZE - PAD],
+    ],
+    { type: 'Sphere' },
+  );
 }
 const path = geoPath(projection);
-const viewBox = `0 0 ${W} ${H}`;
-const graticule = path(geoGraticule10()) ?? '';
 
 const land = path(feature(land110 as any, (land110 as any).objects.land) as any) ?? '';
 const sphere = path({ type: 'Sphere' }) ?? '';
+const graticule = path(geoGraticule10()) ?? '';
 
 const max = Math.max(1, ...routes.map((r) => r.count));
-const arcs = routes.map((r) => {
+const many = routes.length > 20;
+// Least-flown first, so the busiest routes are drawn on top.
+const ordered = [...routes].sort((p, q) => p.count - q.count);
+const arcs = ordered.map((r, i) => {
   const a = getAirport(r.a);
   const b = getAirport(r.b);
+  const coords: [[number, number], [number, number]] = [
+    [a.lon, a.lat],
+    [b.lon, b.lat],
+  ];
   return {
-    d: path({ type: 'LineString', coordinates: [[a.lon, a.lat], [b.lon, b.lat]] }) ?? '',
-    width: 1.6 + 2.4 * (r.count / max),
+    coords,
+    d: path({ type: 'LineString', coordinates: coords }) ?? '',
+    width: +((many ? 1 : 1.6) + 2.6 * Math.sqrt(r.count / max)).toFixed(2),
+    // Spread the draw-in over about 1.4 seconds however many routes there are.
+    delay: (0.15 + (i / Math.max(1, ordered.length)) * 1.4).toFixed(2),
     label: `${r.a} – ${r.b}: ${r.count} ${r.count === 1 ? 'flight' : 'flights'}`,
   };
 });
 
-const dots = airports.map((code) => {
+const showLabel = (code: string) => labels && (!labelCodes || labelCodes.includes(code));
+const points = airports.map((code) => {
   const ap = getAirport(code);
-  const [x, y] = projection([ap.lon, ap.lat])!;
-  return { code, city: ap.city, x, y };
+  return { code, city: ap.city, lon: ap.lon, lat: ap.lat, labelled: showLabel(code) };
 });
 
-// Nudge labels apart when airports are close together (e.g. JFK and EWR).
+// Airports on the visible side of the globe, labels nudged apart (e.g. JFK and EWR).
+const dots: { code: string; city: string; x: number; y: number; labelled: boolean; dy: number }[] = [];
 const placed: { x: number; y: number }[] = [];
-const labelled = dots.map((d) => {
+for (const p of [...points].sort((a, b) => Number(a.labelled) - Number(b.labelled))) {
+  if (geoDistance(center, [p.lon, p.lat]) >= Math.PI / 2) continue;
+  const xy = projection([p.lon, p.lat]);
+  if (!xy) continue;
   let dy = -9;
-  while (placed.some((p) => Math.abs(p.x - d.x) < 34 && Math.abs(p.y - (d.y + dy)) < 13)) dy -= 13;
-  placed.push({ x: d.x, y: d.y + dy });
-  return { ...d, dy };
-});
+  if (p.labelled) {
+    while (placed.some((q) => Math.abs(q.x - xy[0]) < 34 && Math.abs(q.y - (xy[1] + dy)) < 13)) dy -= 13;
+    placed.push({ x: xy[0], y: xy[1] + dy });
+  }
+  dots.push({ code: p.code, city: p.city, x: xy[0], y: xy[1], labelled: p.labelled, dy });
+}
 
-const summary = routes.map((r) => `${r.a}–${r.b} (${r.count})`).join(', ');
+const top = [...routes].sort((p, q) => q.count - p.count).slice(0, 5);
+const summary = `${routes.length} ${routes.length === 1 ? 'route' : 'routes'}; most flown: ${top
+  .map((r) => `${r.a}–${r.b} (${r.count})`)
+  .join(', ')}`;
+
+// What the browser needs to redraw the globe as it turns.
+const mapData = interactive
+  ? JSON.stringify({
+      size: SIZE,
+      scale: projection.scale(),
+      translate: projection.translate(),
+      rotate: projection.rotate(),
+      routes: arcs.map((a) => a.coords),
+      airports: points,
+    })
+  : undefined;
 ---
 
-<figure class:list={['route-map', className, animate && 'animate']}>
-  <svg viewBox={viewBox} role="img" aria-label={`Map of routes flown: ${summary}`}>
+<figure class:list={['route-map', className, animate && 'animate', interactive && 'interactive']} data-map={mapData}>
+  <svg
+    viewBox={`0 0 ${SIZE} ${SIZE}`}
+    role="img"
+    aria-label={`Globe of routes flown: ${summary}`}
+    tabindex={interactive ? 0 : undefined}
+  >
     <defs>
       <clipPath id={`map-sphere-${uid}`}><path d={sphere} /></clipPath>
     </defs>
@@ -124,29 +158,156 @@ const summary = routes.map((r) => `${r.a}–${r.b} (${r.count})`).join(', ');
       <path class="graticule" d={graticule} />
       <path class="land" d={land} />
     </g>
-    <g class="arcs">
-      {arcs.map((a, i) => (
-        <path d={a.d} stroke-width={a.width} pathLength="1" style={`--i:${i}`}>
-          <title>{a.label}</title>
-        </path>
-      ))}
+    <g class:list={['arcs', many && 'many']}>
+      {
+        arcs.map((a) => (
+          <path d={a.d} stroke-width={a.width} pathLength="1" style={`--d:${a.delay}s`}>
+            <title>{a.label}</title>
+          </path>
+        ))
+      }
     </g>
     <g class="airports">
-      {labelled.map((d) => (
-        <g>
-          <circle cx={d.x} cy={d.y} r="4.5">
-            <title>{d.code}, {d.city}</title>
-          </circle>
-          {labels && (
-            <text x={d.x} y={d.y + d.dy} text-anchor="middle">
-              {d.code}
-            </text>
-          )}
-        </g>
-      ))}
+      {
+        dots.map((d) => (
+          <g>
+            <circle cx={d.x} cy={d.y} r={d.labelled ? 4.5 : 3}>
+              <title>
+                {d.code}, {d.city}
+              </title>
+            </circle>
+            {d.labelled && (
+              <text x={d.x} y={d.y + d.dy} text-anchor="middle">
+                {d.code}
+              </text>
+            )}
+          </g>
+        ))
+      }
     </g>
   </svg>
+  {interactive && <figcaption class="hint">Drag the globe to turn it.</figcaption>}
 </figure>
+
+<script>
+  import { geoDistance, geoGraticule10, geoOrthographic, geoPath } from 'd3-geo';
+  import { feature } from 'topojson-client';
+  import land110 from 'world-atlas/land-110m.json';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  type Pt = { code: string; city: string; lon: number; lat: number; labelled: boolean };
+  type MapData = {
+    size: number;
+    scale: number;
+    translate: [number, number];
+    rotate: [number, number, number];
+    routes: [[number, number], [number, number]][];
+    airports: Pt[];
+  };
+
+  const land = feature(land110 as any, (land110 as any).objects.land) as any;
+  const graticule = geoGraticule10();
+
+  document.querySelectorAll<HTMLElement>('.route-map[data-map]').forEach((figure) => {
+    const data: MapData = JSON.parse(figure.dataset.map!);
+    const svg = figure.querySelector('svg')!;
+    const landEl = svg.querySelector('.land')!;
+    const gratEl = svg.querySelector('.graticule')!;
+    const arcEls = [...svg.querySelectorAll<SVGPathElement>('.arcs path')];
+    const airportsEl = svg.querySelector('.airports')!;
+
+    const projection = geoOrthographic().scale(data.scale).translate(data.translate).rotate(data.rotate);
+    const path = geoPath(projection);
+
+    function drawAirports() {
+      const [l, p] = projection.rotate();
+      const center: [number, number] = [-l, -p];
+      const placed: { x: number; y: number }[] = [];
+      const frag = document.createDocumentFragment();
+      const sorted = [...data.airports].sort((a, b) => Number(a.labelled) - Number(b.labelled));
+      for (const ap of sorted) {
+        if (geoDistance(center, [ap.lon, ap.lat]) >= Math.PI / 2) continue;
+        const xy = projection([ap.lon, ap.lat]);
+        if (!xy) continue;
+        const g = document.createElementNS(NS, 'g');
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('cx', String(xy[0]));
+        c.setAttribute('cy', String(xy[1]));
+        c.setAttribute('r', ap.labelled ? '4.5' : '3');
+        const title = document.createElementNS(NS, 'title');
+        title.textContent = `${ap.code}, ${ap.city}`;
+        c.appendChild(title);
+        g.appendChild(c);
+        if (ap.labelled) {
+          let dy = -9;
+          while (placed.some((q) => Math.abs(q.x - xy[0]) < 34 && Math.abs(q.y - (xy[1] + dy)) < 13)) dy -= 13;
+          placed.push({ x: xy[0], y: xy[1] + dy });
+          const t = document.createElementNS(NS, 'text');
+          t.setAttribute('x', String(xy[0]));
+          t.setAttribute('y', String(xy[1] + dy));
+          t.setAttribute('text-anchor', 'middle');
+          t.textContent = ap.code;
+          g.appendChild(t);
+        }
+        frag.appendChild(g);
+      }
+      airportsEl.replaceChildren(frag);
+    }
+
+    function draw() {
+      landEl.setAttribute('d', path(land) ?? '');
+      gratEl.setAttribute('d', path(graticule) ?? '');
+      arcEls.forEach((el, i) => {
+        el.setAttribute('d', path({ type: 'LineString', coordinates: data.routes[i] }) ?? '');
+      });
+      drawAirports();
+    }
+
+    let frame = 0;
+    function turn(rotation: [number, number, number]) {
+      projection.rotate(rotation);
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(draw);
+    }
+
+    // Degrees of rotation per screen pixel, so the surface follows the pointer.
+    const degreesPerPixel = () => (180 / Math.PI / data.scale) * (data.size / svg.getBoundingClientRect().width);
+
+    let drag: { x: number; y: number; rotate: [number, number, number] } | null = null;
+    svg.addEventListener('pointerdown', (e) => {
+      drag = { x: e.clientX, y: e.clientY, rotate: projection.rotate() };
+      svg.setPointerCapture(e.pointerId);
+      figure.classList.add('dragging');
+    });
+    svg.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const k = degreesPerPixel();
+      const [l, p, g] = drag.rotate;
+      turn([l + (e.clientX - drag.x) * k, Math.max(-75, Math.min(75, p - (e.clientY - drag.y) * k)), g]);
+    });
+    const end = () => {
+      drag = null;
+      figure.classList.remove('dragging');
+    };
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+
+    svg.addEventListener('keydown', (e) => {
+      const [l, p, g] = projection.rotate();
+      const step = 15;
+      const moves: Record<string, [number, number, number]> = {
+        ArrowLeft: [l + step, p, g],
+        ArrowRight: [l - step, p, g],
+        ArrowUp: [l, Math.max(-75, p - step), g],
+        ArrowDown: [l, Math.min(75, p + step), g],
+      };
+      if (moves[e.key]) {
+        e.preventDefault();
+        turn(moves[e.key]);
+      }
+    });
+  });
+</script>
 
 <style>
   .route-map {
@@ -157,6 +318,29 @@ const summary = routes.map((r) => `${r.a}–${r.b} (${r.count})`).join(', ');
     display: block;
     width: 100%;
     height: auto;
+  }
+
+  .interactive svg {
+    cursor: grab;
+    /* Vertical swipes still scroll the page on phones; sideways swipes turn the globe. */
+    touch-action: pan-y;
+  }
+
+  .interactive.dragging svg {
+    cursor: grabbing;
+  }
+
+  .interactive svg:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 4px;
+    border-radius: 50%;
+  }
+
+  .hint {
+    text-align: center;
+    font-size: var(--step--1);
+    color: var(--muted);
+    margin-top: 0.5rem;
   }
 
   .sea {
@@ -184,13 +368,17 @@ const summary = routes.map((r) => `${r.a}–${r.b} (${r.count})`).join(', ');
     stroke-linecap: round;
   }
 
-  .airports circle {
+  .arcs.many path {
+    stroke-opacity: 0.7;
+  }
+
+  .airports :global(circle) {
     fill: var(--ink);
     stroke: var(--surface);
     stroke-width: 2;
   }
 
-  .airports text {
+  .airports :global(text) {
     font-family: var(--font-body);
     font-size: 13px;
     font-weight: 700;
@@ -199,6 +387,7 @@ const summary = routes.map((r) => `${r.a}–${r.b} (${r.count})`).join(', ');
     stroke: var(--surface);
     stroke-width: 4px;
     stroke-linejoin: round;
+    pointer-events: none;
   }
 
   /* One moment of motion: routes draw themselves in when the Logbook opens. */
@@ -207,7 +396,7 @@ const summary = routes.map((r) => `${r.a}–${r.b} (${r.count})`).join(', ');
       stroke-dasharray: 1;
       stroke-dashoffset: 1;
       animation: draw 1.6s cubic-bezier(0.45, 0, 0.2, 1) forwards;
-      animation-delay: calc(0.15s + var(--i) * 0.18s);
+      animation-delay: var(--d);
     }
     .animate .airports {
       opacity: 0;
