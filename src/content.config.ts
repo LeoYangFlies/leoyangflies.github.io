@@ -59,9 +59,9 @@ const reviews = defineCollection({
 
 const topicKeys = Object.keys(TIP_TOPICS) as [keyof typeof TIP_TOPICS, ...(keyof typeof TIP_TOPICS)[]];
 
-// Carry-On tips: one Markdown file each in src/content/tips/.
-const tips = defineCollection({
-  loader: glob({ base: './src/content/tips', pattern: '**/*.{md,mdx}' }),
+// Guides: one Markdown file each in src/content/guides/.
+const guides = defineCollection({
+  loader: glob({ base: './src/content/guides', pattern: '**/*.{md,mdx}' }),
   schema: z.object({
     title: z.string(),
     description: z.string(), // one sentence shown in lists and link previews
@@ -72,4 +72,4 @@ const tips = defineCollection({
   }),
 });
 
-export const collections = { reviews, tips };
+export const collections = { reviews, guides };

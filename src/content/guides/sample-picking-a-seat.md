@@ -1,11 +1,11 @@
 ---
 title: 'Sample: how I pick a seat for a 15-hour flight'
-description: 'Placeholder tip. A good tip post answers one question well, in a few minutes of reading.'
+description: 'Placeholder guide. A good guide answers one question well, in a few minutes of reading.'
 published: 2026-10-23
 topic: seats
 ---
 
-This is a sample **Carry-On** post. Replace it with your own, or delete the file.
+This is a sample **guide**. Replace it with your own, or delete the file.
 
 ## The short answer
 

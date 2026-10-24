@@ -8,7 +8,7 @@ Leo Yang's flight review blog, built with [Astro](https://astro.build) and publi
 | --- | --- |
 | Blog name, tagline, author, social links | `src/consts.ts` |
 | Reviews (one Markdown file each) | `src/content/reviews/` |
-| Carry-On tips (one Markdown file each) | `src/content/tips/` |
+| Guides: tips and hacks (one Markdown file each) | `src/content/guides/` |
 | Photos for reviews | `src/content/reviews/images/` |
 | Flight log behind the Logbook page | `src/data/flights.yaml` |
 | Airports the site knows (codes, cities, coordinates) | `src/data/airports.ts` |
@@ -79,11 +79,11 @@ country: USA
 
 Photos go in `src/content/reviews/images/`. Use JPGs straight from your phone; the site resizes and converts them automatically. Blur the barcode and booking code on any boarding pass before uploading.
 
-Files named `sample-...` in `src/content/reviews/` and `src/content/tips/` are placeholders. Delete them once real content is in.
+Files named `sample-...` in `src/content/reviews/` and `src/content/guides/` are placeholders. Delete them once real content is in.
 
-## Writing a Carry-On tip
+## Writing a guide
 
-Create a file in `src/content/tips/`, for example `beat-jet-lag.md`. It appears at `/carry-on/beat-jet-lag/`:
+Create a file in `src/content/guides/`, for example `beat-jet-lag.md`. It appears at `/guides/beat-jet-lag/`:
 
 ```markdown
 ---
@@ -94,10 +94,10 @@ topic: jetlag      # booking, seats, airports, onboard, jetlag, packing or point
 draft: false
 ---
 
-The tip goes here, in the same Markdown as reviews.
+The guide goes here, in the same Markdown as reviews.
 ```
 
-Topics and their labels are set in `src/consts.ts` (`TIP_TOPICS`); only topics with at least one tip show up as filters.
+Topics and their labels are set in `src/consts.ts` (`TIP_TOPICS`); only topics with at least one guide show up as filters.
 
 ## Editing on github.com
 

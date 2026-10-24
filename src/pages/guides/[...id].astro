@@ -9,7 +9,7 @@ import { getTips, readingMinutes, topicLabel, type Tip } from '../../lib/tips';
 export async function getStaticPaths() {
   const tips = await getTips();
   return tips.map((tip) => {
-    // Suggest more tips on the same topic first, then the newest others.
+    // Suggest more guides on the same topic first, then the newest others.
     const others = tips.filter((t) => t.id !== tip.id);
     const more = [
       ...others.filter((t) => t.data.topic === tip.data.topic),
@@ -33,9 +33,9 @@ const { Content } = await render(tip);
   <article class="wrap">
     <header class="head">
       <p class="crumbs">
-        <a href="/carry-on/">{TIPS_TITLE}</a>
+        <a href="/guides/">{TIPS_TITLE}</a>
         <span aria-hidden="true">/</span>
-        <a href={`/carry-on/#${data.topic}`}>{topicLabel(data.topic)}</a>
+        <a href={`/guides/#${data.topic}`}>{topicLabel(data.topic)}</a>
       </p>
       <h1>{data.title}</h1>
       <p class="lede">{data.description}</p>
@@ -53,7 +53,7 @@ const { Content } = await render(tip);
     {
       more.length > 0 && (
         <aside class="more" aria-labelledby="more-heading">
-          <h2 id="more-heading">More from {TIPS_TITLE}</h2>
+          <h2 id="more-heading">More guides</h2>
           <div class="more-list">
             {more.map((t) => (
               <TipItem tip={t} />

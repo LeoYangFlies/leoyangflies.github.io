@@ -5,7 +5,7 @@ import { TIPS_TITLE, TIPS_DESCRIPTION, TIP_TOPICS, type TipTopic } from '../../c
 import { getTips } from '../../lib/tips';
 
 const tips = await getTips();
-// Only offer topics that have at least one tip.
+// Only offer topics that have at least one guide.
 const used = (Object.keys(TIP_TOPICS) as TipTopic[]).filter((t) => tips.some((tip) => tip.data.topic === t));
 const countFor = (t: TipTopic) => tips.filter((tip) => tip.data.topic === t).length;
 ---
@@ -22,7 +22,7 @@ const countFor = (t: TipTopic) => tips.filter((tip) => tip.data.topic === t).len
         used.length > 1 && (
           <nav class="topics" aria-label="Topics">
             <h2 class="visually-hidden">Topics</h2>
-            <ul role="group" aria-label="Show tips about">
+            <ul role="group" aria-label="Show guides about">
               <li>
                 <button type="button" data-filter="all" aria-pressed="true">
                   <span>All topics</span>
@@ -47,7 +47,7 @@ const countFor = (t: TipTopic) => tips.filter((tip) => tip.data.topic === t).len
         <div class="list">
           {tips.map((tip) => <TipItem tip={tip} headingLevel="h2" />)}
         </div>
-        {tips.length === 0 && <p class="none">No tips yet. Add one in src/content/tips/.</p>}
+        {tips.length === 0 && <p class="none">No guides yet. Add one in src/content/guides/.</p>}
       </div>
     </div>
   </div>
@@ -66,7 +66,7 @@ const countFor = (t: TipTopic) => tips.filter((tip) => tip.data.topic === t).len
       item.hidden = !match;
       if (match) shown++;
     });
-    if (announce && status) status.textContent = `Showing ${shown} ${shown === 1 ? 'tip' : 'tips'}`;
+    if (announce && status) status.textContent = `Showing ${shown} ${shown === 1 ? 'guide' : 'guides'}`;
   }
 
   buttons.forEach((button) => {
@@ -77,7 +77,7 @@ const countFor = (t: TipTopic) => tips.filter((tip) => tip.data.topic === t).len
     });
   });
 
-  // Links like /carry-on/#jetlag open with that topic already chosen.
+  // Links like /guides/#jetlag open with that topic already chosen.
   const fromHash = location.hash.slice(1);
   if (fromHash && [...buttons].some((b) => b.dataset.filter === fromHash)) show(fromHash, false);
 </script>
