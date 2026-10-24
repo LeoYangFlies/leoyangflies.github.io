@@ -62,7 +62,7 @@ trip: aug-2026-hkg-yyz-trip
 date: 2026-08-22
 ```
 
-The trip report then lists its detailed reviews, each review links back to the trip, and the Logbook links each flight to its trip report and review.
+The trip report then lists its detailed reviews, each review links back to the trip, and in the Logbook, flights with their own detailed review link to it.
 
 ## Writing a review
 

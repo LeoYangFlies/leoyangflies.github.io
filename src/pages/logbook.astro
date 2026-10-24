@@ -194,7 +194,7 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
                     <th scope="col">Cabin</th>
                     <th scope="col" class="num">Distance</th>
                     <th scope="col" class="num">Time</th>
-                    <th scope="col"><span class="visually-hidden">Trip report and review</span></th>
+                    <th scope="col"><span class="visually-hidden">Review</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -216,18 +216,10 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
                       <td class="num" data-label="Time">{f.minutes !== undefined ? formatMinutes(f.minutes) : ''}</td>
                       <td class="rev">
                         {(() => {
-                          const trip = links.tripFor(f);
+                          // Only flights with their own detailed review get a link.
                           const detailed = links.reviewFor(f);
-                          return (
-                            <>
-                              {trip && <a href={reviewUrl(trip)}>Trip report</a>}
-                              {detailed ? (
-                                <a href={reviewUrl(detailed)}>Review</a>
-                              ) : (
-                                f.review && <a href={`/reviews/${f.review}/`}>Review</a>
-                              )}
-                            </>
-                          );
+                          const href = detailed ? reviewUrl(detailed) : f.review ? `/reviews/${f.review}/` : undefined;
+                          return href && <a href={href}>Read review</a>;
                         })()}
                       </td>
                     </tr>
