@@ -2,8 +2,8 @@
 
 export const SITE_TITLE = 'Postmarked';
 export const SITE_DESCRIPTION =
-  'Honest notes on where I stayed, what I ate, and what was worth the detour.';
-export const AUTHOR = 'Your Name';
+  'Honest flight reviews from a student commuting between New York and Shanghai, and wherever else I end up.';
+export const AUTHOR = 'Leo Yang';
 
 // Leave a link empty ('') to hide it from the footer.
 export const SOCIAL = {
