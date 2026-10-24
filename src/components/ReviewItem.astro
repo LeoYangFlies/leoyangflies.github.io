@@ -1,0 +1,89 @@
+---
+// One review in a list: small cover, title, where, what kind, and the rating.
+import Cover from './Cover.astro';
+import Rating from './Rating.astro';
+import { categoryLabel, reviewUrl, type Review } from '../lib/reviews';
+
+interface Props {
+  review: Review;
+  headingLevel?: 'h2' | 'h3';
+}
+
+const { review, headingLevel = 'h3' } = Astro.props;
+const { data } = review;
+const Heading = headingLevel;
+---
+
+<article class="item" data-category={data.category}>
+  <a class="thumb" href={reviewUrl(review)} tabindex="-1" aria-hidden="true">
+    <Cover image={data.cover} alt="" place={data.place} ratio="1 / 1" widths={[200, 400]} sizes="8rem" />
+  </a>
+  <div class="body">
+    <p class="where">
+      <span>{data.place}, {data.country}</span>
+      <span class="kind">{categoryLabel(data.category)}</span>
+    </p>
+    <Heading class="title"><a href={reviewUrl(review)}>{data.title}</a></Heading>
+    <p class="desc">{data.description}</p>
+    {data.rating !== undefined && <Rating value={data.rating} />}
+  </div>
+</article>
+
+<style>
+  .item {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 1.1rem;
+    align-items: start;
+  }
+
+  .thumb {
+    display: block;
+  }
+
+  .body {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .where {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.9rem;
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .kind {
+    color: var(--blue);
+    font-weight: 600;
+  }
+
+  .title {
+    font-size: var(--step-1);
+    line-height: 1.25;
+  }
+
+  .title a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .title a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--red);
+  }
+
+  .desc {
+    color: var(--text);
+    font-size: 0.98rem;
+    max-width: 52ch;
+  }
+
+  @media (max-width: 30rem) {
+    .item {
+      grid-template-columns: 5rem 1fr;
+      gap: 0.9rem;
+    }
+  }
+</style>

@@ -1,0 +1,136 @@
+---
+import Base from '../layouts/Base.astro';
+import Rating from '../components/Rating.astro';
+import { getReviews, groupByCountry, categoryLabel, reviewUrl } from '../lib/reviews';
+
+const reviews = await getReviews();
+const countries = groupByCountry(reviews);
+---
+
+<Base title="Places" description="Every country I've written about, and what I reviewed there.">
+  <div class="wrap">
+    <header class="page-head">
+      <h1>Places</h1>
+      <p>
+        {countries.length}
+        {countries.length === 1 ? ' country' : ' countries'} so far.
+      </p>
+    </header>
+
+    {
+      countries.length > 1 && (
+        <nav class="jump" aria-label="Jump to country">
+          {countries.map((c) => (
+            <a href={`#${c.slug}`}>{c.country}</a>
+          ))}
+        </nav>
+      )
+    }
+
+    <div class="countries">
+      {
+        countries.map((c) => (
+          <section id={c.slug} class="country" aria-labelledby={`${c.slug}-h`}>
+            <h2 id={`${c.slug}-h`}>{c.country}</h2>
+            <ul>
+              {c.reviews.map((r) => (
+                <li>
+                  <a href={reviewUrl(r)}>{r.data.title}</a>
+                  <span class="meta">
+                    {r.data.place}, {categoryLabel(r.data.category).toLowerCase()}
+                  </span>
+                  {r.data.rating !== undefined && <Rating value={r.data.rating} />}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
+  </div>
+</Base>
+
+<style>
+  .page-head {
+    display: grid;
+    gap: 0.6rem;
+    margin: 1.5rem 0 2rem;
+  }
+
+  .page-head h1 {
+    font-size: var(--step-4);
+  }
+
+  .page-head p {
+    color: var(--muted);
+    font-size: var(--step-1);
+  }
+
+  .jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.2rem;
+    margin-bottom: 2.5rem;
+    font-weight: 500;
+  }
+
+  .countries {
+    display: grid;
+    gap: 3rem;
+    max-width: 50rem;
+  }
+
+  .country {
+    scroll-margin-top: 1.5rem;
+  }
+
+  .country h2 {
+    font-size: var(--step-3);
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0.4rem;
+  }
+
+  .country ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .country li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 1.5rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+
+  .country li a {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--ink);
+    text-decoration: none;
+    line-height: 1.3;
+  }
+
+  .country li a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--red);
+  }
+
+  .country li :global(.rating) {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+
+  .meta {
+    grid-column: 1;
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .country:target h2 {
+    color: var(--red);
+  }
+</style>

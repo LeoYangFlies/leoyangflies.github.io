@@ -1,0 +1,129 @@
+---
+import Base from '../../layouts/Base.astro';
+import ReviewItem from '../../components/ReviewItem.astro';
+import { CATEGORIES, type Category } from '../../consts';
+import { getReviews } from '../../lib/reviews';
+
+const reviews = await getReviews();
+// Only offer filters for kinds of review that actually exist.
+const used = (Object.keys(CATEGORIES) as Category[]).filter((c) => reviews.some((r) => r.data.category === c));
+---
+
+<Base title="Reviews" description="Every place I've reviewed, newest first.">
+  <div class="wrap">
+    <header class="page-head">
+      <h1>Reviews</h1>
+      <p>Every place I've reviewed, newest first.</p>
+    </header>
+
+    {
+      used.length > 1 && (
+        <div class="filters" role="group" aria-label="Show reviews of type">
+          <button type="button" data-filter="all" aria-pressed="true">
+            All <span class="count">{reviews.length}</span>
+          </button>
+          {used.map((c) => (
+            <button type="button" data-filter={c} aria-pressed="false">
+              {CATEGORIES[c]}{' '}
+              <span class="count">{reviews.filter((r) => r.data.category === c).length}</span>
+            </button>
+          ))}
+        </div>
+      )
+    }
+
+    <p class="status visually-hidden" role="status" aria-live="polite"></p>
+
+    <div class="list">
+      {reviews.map((r) => <ReviewItem review={r} headingLevel="h2" />)}
+    </div>
+
+    {reviews.length === 0 && <p class="none">No reviews yet. Add one in src/content/reviews/.</p>}
+  </div>
+</Base>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const items = document.querySelectorAll<HTMLElement>('.list [data-category]');
+  const status = document.querySelector<HTMLElement>('.status');
+
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const filter = button.dataset.filter;
+      let shown = 0;
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+      items.forEach((item) => {
+        const match = filter === 'all' || item.dataset.category === filter;
+        item.hidden = !match;
+        if (match) shown++;
+      });
+      if (status) status.textContent = `Showing ${shown} ${shown === 1 ? 'review' : 'reviews'}`;
+    });
+  });
+</script>
+
+<style>
+  .page-head {
+    display: grid;
+    gap: 0.6rem;
+    margin: 1.5rem 0 2rem;
+  }
+
+  .page-head h1 {
+    font-size: var(--step-4);
+  }
+
+  .page-head p {
+    color: var(--muted);
+    font-size: var(--step-1);
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2.4rem;
+  }
+
+  .filters button {
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    background: transparent;
+    border: 1.5px solid var(--rule);
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem;
+    cursor: pointer;
+  }
+
+  .filters button:hover {
+    border-color: var(--ink);
+  }
+
+  .filters button[aria-pressed='true'] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  .count {
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+    margin-left: 0.15rem;
+  }
+
+  .list {
+    display: grid;
+    gap: 2.4rem;
+    max-width: 48rem;
+  }
+
+  .list :global([hidden]) {
+    display: none;
+  }
+
+  .none {
+    color: var(--muted);
+  }
+</style>

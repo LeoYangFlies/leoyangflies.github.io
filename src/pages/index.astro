@@ -1,0 +1,254 @@
+---
+import Base from '../layouts/Base.astro';
+import Cover from '../components/Cover.astro';
+import Postmark from '../components/Postmark.astro';
+import Rating from '../components/Rating.astro';
+import ReviewItem from '../components/ReviewItem.astro';
+import { SITE_DESCRIPTION } from '../consts';
+import { getReviews, groupByCountry, categoryLabel, reviewUrl } from '../lib/reviews';
+
+const reviews = await getReviews();
+const [latest, ...rest] = reviews;
+const recent = rest.slice(0, 6);
+const places = groupByCountry(reviews);
+---
+
+<Base>
+  <div class="wrap">
+    <p class="intro">{SITE_DESCRIPTION}</p>
+
+    {
+      latest ? (
+        <article class="feature">
+          <a class="feature-cover" href={reviewUrl(latest)} tabindex="-1" aria-hidden="true">
+            <Cover
+              image={latest.data.cover}
+              alt=""
+              place={latest.data.place}
+              ratio="16 / 9"
+              sizes="(min-width: 72rem) 70rem, 100vw"
+              loading="eager"
+            />
+          </a>
+          <div class="feature-text">
+            <Postmark
+              class="feature-stamp"
+              place={latest.data.place}
+              country={latest.data.country}
+              date={latest.data.published}
+            />
+            <p class="feature-kind">
+              Newest in {categoryLabel(latest.data.category).toLowerCase()}, from {latest.data.place}
+            </p>
+            <h1 class="feature-title">
+              <a href={reviewUrl(latest)}>{latest.data.title}</a>
+            </h1>
+            <p class="feature-desc">{latest.data.description}</p>
+            {latest.data.rating !== undefined && <Rating value={latest.data.rating} />}
+          </div>
+        </article>
+      ) : (
+        <div class="empty">
+          <h1>Nothing posted yet</h1>
+          <p>Add your first review as a Markdown file in src/content/reviews/ and it will appear here.</p>
+        </div>
+      )
+    }
+
+    {
+      recent.length > 0 && (
+        <section class="recent" aria-labelledby="recent-heading">
+          <div class="section-head">
+            <h2 id="recent-heading">More reviews</h2>
+            <a href="/reviews/">All reviews</a>
+          </div>
+          <div class="recent-list">
+            {recent.map((r) => (
+              <ReviewItem review={r} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      places.length > 0 && (
+        <section class="places" aria-labelledby="places-heading">
+          <div class="section-head">
+            <h2 id="places-heading">Where I've been</h2>
+            <a href="/places/">All places</a>
+          </div>
+          <ul class="place-list">
+            {places.map((p) => (
+              <li>
+                <a href={`/places/#${p.slug}`}>
+                  <span class="place-name">{p.country}</span>
+                  <span class="place-count">
+                    {p.reviews.length} {p.reviews.length === 1 ? 'review' : 'reviews'}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  .intro {
+    max-width: 38ch;
+    font-size: var(--step-1);
+    color: var(--muted);
+    margin: 1.5rem 0 2rem;
+    line-height: 1.45;
+  }
+
+  /* Featured latest review: wide cover with the postmark pressed over its edge */
+  .feature {
+    display: grid;
+    gap: 0;
+  }
+
+  .feature-cover {
+    display: block;
+  }
+
+  .feature-text {
+    position: relative;
+    display: grid;
+    gap: 0.7rem;
+    padding: 1.6rem 0 0;
+    max-width: 44rem;
+  }
+
+  .feature-text :global(.feature-stamp) {
+    position: absolute;
+    right: -1rem;
+    top: -4.5rem;
+    width: 14rem;
+    color: var(--red);
+    transform: rotate(-9deg);
+    pointer-events: none;
+  }
+
+  .feature-kind {
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--blue);
+  }
+
+  .feature-title {
+    font-size: var(--step-4);
+    max-width: 18ch;
+  }
+
+  .feature-title a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .feature-title a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--red);
+    text-decoration-thickness: 3px;
+  }
+
+  .feature-desc {
+    font-size: var(--step-1);
+    line-height: 1.5;
+    max-width: 44ch;
+  }
+
+  @media (min-width: 56rem) {
+    .feature-text {
+      max-width: none;
+      padding-right: 24rem;
+    }
+    .feature-text :global(.feature-stamp) {
+      right: -0.5rem;
+      top: -3.25rem;
+      width: 23rem;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .feature-text :global(.feature-stamp) {
+      width: 10.5rem;
+      top: -2.6rem;
+      right: 0;
+    }
+  }
+
+  .empty {
+    padding: 3rem 0;
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  /* Sections */
+  .recent,
+  .places {
+    margin-top: 4.5rem;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.9rem;
+    margin-bottom: 1.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .section-head h2 {
+    font-size: var(--step-3);
+  }
+
+  .section-head a {
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .recent-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
+    gap: 2.2rem 3rem;
+  }
+
+  .place-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .place-list a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.55rem 1rem;
+    border: 1.5px solid var(--rule);
+    border-radius: 999px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .place-list a:hover {
+    border-color: var(--ink);
+  }
+
+  .place-name {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+  }
+
+  .place-count {
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+</style>

@@ -1,0 +1,26 @@
+---
+// Layout for simple text pages written in Markdown, like the About page.
+import Base from './Base.astro';
+
+interface Props {
+  frontmatter: { title: string; description?: string };
+}
+
+const { frontmatter } = Astro.props;
+---
+
+<Base title={frontmatter.title} description={frontmatter.description}>
+  <div class="wrap">
+    <h1 class="title">{frontmatter.title}</h1>
+    <div class="prose">
+      <slot />
+    </div>
+  </div>
+</Base>
+
+<style>
+  .title {
+    font-size: var(--step-4);
+    margin: 1.5rem 0 2rem;
+  }
+</style>
