@@ -1,7 +1,7 @@
 ---
 title: 'Sample: getting through Pudong before a long-haul flight'
 description: 'Placeholder airport review. Swap in your own notes on an airport you know well.'
-published: 2026-10-15
+published: 2026-10-20
 category: airport
 place: Shanghai Pudong (PVG)
 country: China

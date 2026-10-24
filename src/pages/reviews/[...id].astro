@@ -4,46 +4,92 @@ import { getImage } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import Cover from '../../components/Cover.astro';
 import Postmark from '../../components/Postmark.astro';
+import ReviewItem from '../../components/ReviewItem.astro';
+import RouteMap from '../../components/RouteMap.astro';
 import { getAirport, distanceKm } from '../../data/airports';
-import { getReviews, categoryLabel, formatDate, reviewUrl, postmarkText, whereLong, whereShort, type Review } from '../../lib/reviews';
+import { fmt, formatMinutes, type Route } from '../../lib/flights';
+import {
+  getReviews,
+  categoryLabel,
+  flightLinks,
+  formatDate,
+  formatRange,
+  reviewUrl,
+  reviewsInTrip,
+  postmarkText,
+  tripFlights,
+  tripPath,
+  whereLong,
+  whereShort,
+  type Review,
+} from '../../lib/reviews';
 
 export async function getStaticPaths() {
   const reviews = await getReviews();
   return reviews.map((review, i) => ({
     params: { id: review.id },
-    props: { review, newer: reviews[i - 1], older: reviews[i + 1] },
+    props: { review, all: reviews, newer: reviews[i - 1], older: reviews[i + 1] },
   }));
 }
 
 interface Props {
   review: Review;
+  all: Review[];
   newer?: Review;
   older?: Review;
 }
 
-const { review, newer, older } = Astro.props;
+const { review, all, newer, older } = Astro.props;
 const { data } = review;
 const { Content } = await render(review);
 const ogImage = data.cover ? (await getImage({ src: data.cover, width: 1200, format: 'jpg' })).src : undefined;
 const hasSummary = data.verdict || data.liked.length || data.disliked.length;
 const isFlight = data.category === 'flight' && data.from && data.to;
+const isTrip = data.category === 'trip';
 const stamp = postmarkText(review);
 
-// The facts row under the title: flight details for flights, place details otherwise.
-const facts: { label: string; value: string }[] = isFlight
+// Trip reports: the itinerary comes from the Logbook, plus the detailed reviews written for this trip.
+const legs = isTrip ? tripFlights(review) : [];
+const links = flightLinks(all);
+const tripReviews = isTrip ? reviewsInTrip(review, all) : [];
+const tripRoutes: Route[] = [];
+for (const f of legs) {
+  const [a, b] = [f.from, f.to].sort();
+  const r = tripRoutes.find((x) => x.a === a && x.b === b);
+  if (r) r.count++;
+  else tripRoutes.push({ a, b, count: 1 });
+}
+const tripKm = legs.reduce((sum, f) => sum + f.km, 0);
+const tripMinutes = legs.reduce((sum, f) => sum + (f.minutes ?? 0), 0);
+const shortDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+// Detailed reviews: the trip they belong to, and the other reviews from that trip.
+const parentTrip = data.trip ? all.find((r) => r.id === data.trip) : undefined;
+const siblings = parentTrip ? reviewsInTrip(parentTrip, all).filter((r) => r.id !== review.id) : [];
+
+// The facts row under the title.
+const facts: { label: string; value: string }[] = isTrip
   ? [
-      { label: 'Route', value: `${getAirport(data.from!).city} ${data.from} to ${getAirport(data.to!).city} ${data.to}` },
-      { label: 'Flight', value: [data.airline, data.flight].filter(Boolean).join(' ') },
-      ...(data.aircraft ? [{ label: 'Aircraft', value: data.aircraft }] : []),
-      ...(data.cabin ? [{ label: 'Cabin', value: data.seat ? `${data.cabin}, seat ${data.seat}` : data.cabin }] : []),
-      ...(data.duration ? [{ label: 'Flight time', value: data.duration }] : []),
-      { label: 'Distance', value: `${Math.round(distanceKm(data.from!, data.to!)).toLocaleString('en-US')} km` },
-      ...(data.when ? [{ label: 'Flown', value: data.when }] : []),
+      { label: 'Dates', value: formatRange(data.start!, data.end!) },
+      { label: 'Route', value: tripPath(legs).join(' – ') || 'No flights logged for these dates' },
+      { label: 'Flights', value: String(legs.length) },
+      ...(tripKm ? [{ label: 'Distance', value: `${fmt(Math.round(tripKm))} km` }] : []),
+      ...(tripMinutes ? [{ label: 'In the air', value: formatMinutes(tripMinutes) }] : []),
     ]
-  : [
-      { label: 'Where', value: whereLong(review) },
-      ...(data.when ? [{ label: 'Visited', value: data.when }] : []),
-    ];
+  : isFlight
+    ? [
+        { label: 'Route', value: `${getAirport(data.from!).city} ${data.from} to ${getAirport(data.to!).city} ${data.to}` },
+        { label: 'Flight', value: [data.airline, data.flight].filter(Boolean).join(' ') },
+        ...(data.aircraft ? [{ label: 'Aircraft', value: data.aircraft }] : []),
+        ...(data.cabin ? [{ label: 'Cabin', value: data.seat ? `${data.cabin}, seat ${data.seat}` : data.cabin }] : []),
+        ...(data.duration ? [{ label: 'Flight time', value: data.duration }] : []),
+        { label: 'Distance', value: `${Math.round(distanceKm(data.from!, data.to!)).toLocaleString('en-US')} km` },
+        ...(data.date ? [{ label: 'Flown', value: formatDate(data.date) }] : data.when ? [{ label: 'Flown', value: data.when }] : []),
+      ]
+    : [
+        { label: 'Where', value: whereLong(review) },
+        ...(data.when ? [{ label: 'Visited', value: data.when }] : []),
+      ];
 ---
 
 <Base title={data.title} description={data.description} image={ogImage} type="article">
@@ -54,6 +100,13 @@ const facts: { label: string; value: string }[] = isFlight
         <span aria-hidden="true">/</span>
         <a href={`/reviews/#${data.category}`}>{categoryLabel(data.category)}</a>
       </p>
+      {
+        parentTrip && (
+          <p class="part-of">
+            Part of the trip report <a href={reviewUrl(parentTrip)}>{parentTrip.data.title}</a>
+          </p>
+        )
+      }
       <h1>{data.title}</h1>
       <p class="lede">{data.description}</p>
 
@@ -81,6 +134,60 @@ const facts: { label: string; value: string }[] = isFlight
             loading="eager"
           />
         </figure>
+      )
+    }
+
+    {
+      isTrip && legs.length > 0 && (
+        <section class="itinerary" aria-labelledby="itinerary-h">
+          <h2 id="itinerary-h">Itinerary</h2>
+          <div class="itinerary-body">
+            <RouteMap routes={tripRoutes} airports={[...new Set(legs.flatMap((f) => [f.from, f.to]))]} class="trip-map" />
+            <ol class="legs">
+              {legs.map((f) => {
+                const detailed = links.reviewFor(f);
+                return (
+                  <li>
+                    <span class="leg-date">{shortDate(f.date)}</span>
+                    <span class="leg-route">
+                      {f.from} – {f.to}
+                      <span class="leg-cities">
+                        {getAirport(f.from).city} to {getAirport(f.to).city}
+                      </span>
+                    </span>
+                    <span class="leg-flight">
+                      {f.airline}
+                      {f.flight && <span class="leg-code"> {f.flight}</span>}
+                      <span class="leg-detail">
+                        {[f.aircraft, f.cabin && (f.seat ? `${f.cabin}, seat ${f.seat}` : f.cabin), f.minutes !== undefined && formatMinutes(f.minutes)]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </span>
+                    </span>
+                    {detailed && (
+                      <a class="leg-review" href={reviewUrl(detailed)}>
+                        Read the review
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      isTrip && tripReviews.length > 0 && (
+        <section class="trip-reviews" aria-labelledby="trip-reviews-h">
+          <h2 id="trip-reviews-h">Detailed reviews from this trip</h2>
+          <div class="trip-reviews-list">
+            {tripReviews.map((r) => (
+              <ReviewItem review={r} />
+            ))}
+          </div>
+        </section>
       )
     }
 
@@ -125,7 +232,25 @@ const facts: { label: string; value: string }[] = isFlight
         Published {formatDate(data.published)}{data.updated && <>, updated {formatDate(data.updated)}</>}
       </p>
       {
-        (newer || older) && (
+        parentTrip && (
+          <nav class="from-trip" aria-labelledby="from-trip-h">
+            <h2 id="from-trip-h">More from this trip</h2>
+            <a class="trip-link" href={reviewUrl(parentTrip)}>
+              <span class="pager-label">Trip report</span>
+              <span class="pager-title">{parentTrip.data.title}</span>
+            </a>
+            {siblings.length > 0 && (
+              <div class="trip-reviews-list">
+                {siblings.map((r) => (
+                  <ReviewItem review={r} />
+                ))}
+              </div>
+            )}
+          </nav>
+        )
+      }
+      {
+        !parentTrip && (newer || older) && (
           <nav class="pager" aria-label="More reviews">
             {older ? (
               <a class="older" href={reviewUrl(older)}>
@@ -149,6 +274,125 @@ const facts: { label: string; value: string }[] = isFlight
 </Base>
 
 <style>
+  .part-of {
+    font-size: var(--step--1);
+    color: var(--muted);
+    padding-left: 0.75rem;
+    border-left: 3px solid var(--red);
+  }
+
+  .itinerary,
+  .trip-reviews {
+    margin: 0 0 3.5rem;
+  }
+
+  .itinerary h2,
+  .trip-reviews h2,
+  .from-trip h2 {
+    font-size: var(--step-2);
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 1.25rem;
+  }
+
+  .itinerary-body {
+    display: grid;
+    gap: 1.5rem 3rem;
+    align-items: start;
+  }
+
+  @media (min-width: 56rem) {
+    .itinerary-body {
+      grid-template-columns: 20rem minmax(0, 1fr);
+    }
+  }
+
+  .itinerary-body :global(.trip-map) {
+    max-width: 20rem;
+    width: 100%;
+    justify-self: center;
+  }
+
+  .legs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .legs li {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 11rem) minmax(0, 1fr) auto;
+    gap: 0.3rem 1.25rem;
+    align-items: baseline;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .legs li:last-child {
+    border-bottom: 0;
+  }
+
+  .leg-date {
+    font-size: var(--step--1);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .leg-route {
+    font-weight: 650;
+    color: var(--ink);
+  }
+
+  .leg-cities,
+  .leg-detail {
+    display: block;
+    font-weight: 400;
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .leg-code {
+    color: var(--muted);
+  }
+
+  .leg-review {
+    font-size: var(--step--1);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 40rem) {
+    .legs li {
+      grid-template-columns: 4rem minmax(0, 1fr);
+    }
+    .leg-flight,
+    .leg-review {
+      grid-column: 2;
+    }
+  }
+
+  .trip-reviews-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr));
+    gap: 2rem 3rem;
+  }
+
+  .from-trip {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .trip-link {
+    display: grid;
+    gap: 0.25rem;
+    text-decoration: none;
+  }
+
+  .trip-link:hover .pager-title {
+    text-decoration: underline;
+    text-decoration-color: var(--red);
+  }
+
   .head {
     display: grid;
     gap: 1rem;

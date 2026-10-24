@@ -1,7 +1,7 @@
 ---
 // One review in a list: small cover, where, what kind, title and summary.
 import Cover from './Cover.astro';
-import { reviewKind, reviewUrl, whereShort, whereLong, type Review } from '../lib/reviews';
+import { formatRange, reviewKind, reviewUrl, whereShort, whereLong, type Review } from '../lib/reviews';
 
 interface Props {
   review: Review;
@@ -12,6 +12,8 @@ const { review, headingLevel = 'h3' } = Astro.props;
 const { data } = review;
 const Heading = headingLevel;
 const isFlight = data.category === 'flight';
+const isTrip = data.category === 'trip';
+const kind = isTrip ? 'Trip report' : reviewKind(data.category);
 ---
 
 <article class="item" data-category={data.category}>
@@ -20,8 +22,9 @@ const isFlight = data.category === 'flight';
   </a>
   <div class="body">
     <p class="where">
-      <span class="kind">{reviewKind(data.category)}</span>
-      <span>{isFlight ? whereShort(review) : whereLong(review)}</span>
+      <span class="kind">{kind}</span>
+      <span>{isFlight || isTrip ? whereShort(review) : whereLong(review)}</span>
+      {isTrip && data.start && data.end && <span>{formatRange(data.start, data.end)}</span>}
       {isFlight && data.airline && <span>{[data.airline, data.flight].filter(Boolean).join(' ')}</span>}
     </p>
     <Heading class="title"><a href={reviewUrl(review)}>{data.title}</a></Heading>

@@ -11,8 +11,9 @@ import { getStats, fmt } from '../lib/flights';
 import { getTips } from '../lib/tips';
 
 const reviews = await getReviews();
-const [latest, ...rest] = reviews;
-const recent = rest.slice(0, 6);
+// Lead with the newest trip report; fall back to the newest review of any kind.
+const latest = reviews.find((r) => r.data.category === 'trip') ?? reviews[0];
+const recent = reviews.filter((r) => r !== latest).slice(0, 6);
 const stats = getStats();
 const tips = (await getTips()).slice(0, 3);
 const stamp = latest ? postmarkText(latest) : undefined;
@@ -38,7 +39,8 @@ const stamp = latest ? postmarkText(latest) : undefined;
           <div class="feature-text">
             <Postmark class="feature-stamp" top={stamp.top} bottom={stamp.bottom} date={latest.data.published} />
             <p class="feature-kind">
-              Latest {reviewKind(latest.data.category).toLowerCase()} review: {whereLong(latest)}
+              {latest.data.category === 'trip' ? 'Latest trip report' : `Latest ${reviewKind(latest.data.category).toLowerCase()} review`}:{' '}
+              {whereLong(latest)}
             </p>
             <h1 class="feature-title">
               <a href={reviewUrl(latest)}>{latest.data.title}</a>

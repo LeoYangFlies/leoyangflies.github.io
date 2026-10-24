@@ -62,9 +62,36 @@ export function getFlights(): Flight[] {
       }
       const f = result.data;
       return { ...f, km: distanceKm(f.from, f.to), minutes: parseDuration(f.duration) };
-    })
-    .sort((a, b) => b.date.valueOf() - a.date.valueOf());
+    });
+  cache = inFlownOrder(cache).reverse();
   return cache;
+}
+
+/**
+ * Oldest first. The log has dates but no times, so flights on the same day are put in
+ * the order they connect: each leg starts where the one before it landed.
+ */
+function inFlownOrder(flights: Flight[]): Flight[] {
+  const byDay = new Map<number, Flight[]>();
+  for (const f of flights) {
+    const day = f.date.valueOf();
+    byDay.set(day, [...(byDay.get(day) ?? []), f]);
+  }
+  const ordered: Flight[] = [];
+  for (const day of [...byDay.keys()].sort((a, b) => a - b)) {
+    const remaining = [...byDay.get(day)!];
+    let at = ordered[ordered.length - 1]?.to;
+    while (remaining.length) {
+      // Prefer the leg leaving from where we are; otherwise the leg nothing else that day arrives at.
+      let i = remaining.findIndex((f) => f.from === at);
+      if (i < 0) i = remaining.findIndex((f) => !remaining.some((g) => g !== f && g.to === f.from));
+      if (i < 0) i = 0;
+      const [next] = remaining.splice(i, 1);
+      ordered.push(next);
+      at = next.to;
+    }
+  }
+  return ordered;
 }
 
 function countBy<T>(items: T[], key: (item: T) => string | undefined): { name: string; count: number }[] {

@@ -35,9 +35,18 @@ const reviews = defineCollection({
         seat: z.string().optional(),
         duration: z.string().optional(), // e.g. "14h 35m"
 
-        // Airports, lounges and destinations
+        // Airports and lounges
         place: z.string().optional(), // e.g. "Shanghai Pudong (PVG)"
         country: z.string().optional(),
+
+        // Trip reports: every Logbook flight from start to end (inclusive) becomes the itinerary.
+        start: z.coerce.date().optional(),
+        end: z.coerce.date().optional(),
+
+        // Detailed reviews: the trip report they belong to (its file name, without .md),
+        // and for flights, the date flown, which links the review to that flight in the Logbook.
+        trip: z.string().optional(),
+        date: z.coerce.date().optional(),
 
         when: z.string().optional(), // free text, e.g. "August 2026"
         verdict: z.string().optional(), // one-sentence bottom line
@@ -51,8 +60,14 @@ const reviews = defineCollection({
         if (data.category === 'flight' && (!data.from || !data.to || !data.airline)) {
           ctx.addIssue({ code: 'custom', message: 'Flight reviews need airline, from and to.' });
         }
-        if (data.category !== 'flight' && (!data.place || !data.country)) {
-          ctx.addIssue({ code: 'custom', message: 'This kind of review needs place and country.' });
+        if ((data.category === 'airport' || data.category === 'lounge') && (!data.place || !data.country)) {
+          ctx.addIssue({ code: 'custom', message: 'Airport and lounge reviews need place and country.' });
+        }
+        if (data.category === 'trip' && (!data.start || !data.end)) {
+          ctx.addIssue({ code: 'custom', message: 'Trip reports need start and end dates.' });
+        }
+        if (data.category === 'trip' && data.trip) {
+          ctx.addIssue({ code: 'custom', message: 'A trip report cannot itself belong to a trip.' });
         }
       }),
 });

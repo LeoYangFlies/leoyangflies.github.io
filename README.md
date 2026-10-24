@@ -34,6 +34,36 @@ Add a block to `src/data/flights.yaml`. Every flight belongs here, whether or no
 
 Distances, totals, the map and all the stats are worked out automatically. If the build complains about an unknown airport code, add that airport to `src/data/airports.ts`.
 
+## Trip reports and detailed reviews
+
+Each trip gets a **trip report**: the overview, how you booked, the itinerary, and short notes on anything not worth its own review. The flights and lounges that deserve a full write-up get **detailed reviews** of their own, linked to the trip.
+
+A trip report only needs its dates. Every flight in the Logbook between `start` and `end` becomes its itinerary and route map automatically:
+
+```markdown
+---
+title: 'Shanghai to New York the long way, through Hong Kong and Toronto'
+description: 'One sentence shown in lists and link previews.'
+published: 2026-10-30
+category: trip
+start: 2026-08-21
+end: 2026-08-22
+cover: ./images/aug-2026-cover.jpg
+coverAlt: 'Describe the photo'
+---
+
+Why this route, how I booked, notes on the shorter flights and lounges...
+```
+
+A detailed review joins its trip with `trip:` (the trip report's file name, without .md). For flights, `date:` links the review to that flight in the Logbook:
+
+```yaml
+trip: aug-2026-hkg-yyz-trip
+date: 2026-08-22
+```
+
+The trip report then lists its detailed reviews, each review links back to the trip, and the Logbook links each flight to its trip report and review.
+
 ## Writing a review
 
 Create a file in `src/content/reviews/`, for example `pvg-jfk-august-2026.md`. The file name becomes the web address: `/reviews/pvg-jfk-august-2026/`.
@@ -45,7 +75,7 @@ A flight review starts like this:
 title: 'Fifteen hours in economy, Shanghai to New York'
 description: 'One sentence shown in lists and link previews.'
 published: 2026-09-02
-category: flight          # flight, airport, lounge or destination
+category: flight          # trip, flight, airport or lounge
 airline: China Eastern
 flight: MU587
 from: PVG
@@ -54,7 +84,8 @@ aircraft: Boeing 777-300ER
 cabin: Economy
 seat: 45K
 duration: 14h 35m
-when: August 2026
+date: 2026-08-22          # date flown; links the review to the flight in the Logbook
+trip: aug-2026-trip       # optional: the trip report this review belongs to
 verdict: 'Optional one-sentence bottom line.'
 liked:
   - 'Something good'
@@ -69,7 +100,7 @@ The review goes here. Use ## for headings, **bold**, - for bullet lists,
 > for a pull quote, and ![description](./images/photo.jpg) for extra photos.
 ```
 
-Airport, lounge and destination reviews use `place` and `country` instead of the flight fields:
+Airport and lounge reviews use `place` and `country` instead of the flight fields:
 
 ```yaml
 category: lounge

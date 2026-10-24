@@ -14,10 +14,10 @@ export const SOCIAL = {
 // The kinds of review the blog supports. The key is what you write in a post's
 // "category" field; the label is what readers see.
 export const CATEGORIES = {
+  trip: 'Trip reports',
   flight: 'Flights',
   airport: 'Airports',
   lounge: 'Lounges',
-  destination: 'Destinations',
 } as const;
 
 export type Category = keyof typeof CATEGORIES;

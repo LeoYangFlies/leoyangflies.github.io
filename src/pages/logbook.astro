@@ -3,8 +3,10 @@ import Base from '../layouts/Base.astro';
 import RouteMap from '../components/RouteMap.astro';
 import { getFlights, getStats, formatMinutes, fmt } from '../lib/flights';
 import { getAirport } from '../data/airports';
+import { getReviews, flightLinks, reviewUrl } from '../lib/reviews';
 
 const flights = getFlights();
+const links = flightLinks(await getReviews());
 const s = getStats(flights);
 
 type Row = { name: string; sub?: string; count: number };
@@ -192,7 +194,7 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
                     <th scope="col">Cabin</th>
                     <th scope="col" class="num">Distance</th>
                     <th scope="col" class="num">Time</th>
-                    <th scope="col"><span class="visually-hidden">Review</span></th>
+                    <th scope="col"><span class="visually-hidden">Trip report and review</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -212,7 +214,22 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
                       <td data-label="Cabin">{f.cabin ?? ''}{f.seat && <span class="fine">, seat {f.seat}</span>}</td>
                       <td class="num" data-label="Distance">{fmt(Math.round(f.km))} km</td>
                       <td class="num" data-label="Time">{f.minutes !== undefined ? formatMinutes(f.minutes) : ''}</td>
-                      <td class="rev">{f.review && <a href={`/reviews/${f.review}/`}>Read review</a>}</td>
+                      <td class="rev">
+                        {(() => {
+                          const trip = links.tripFor(f);
+                          const detailed = links.reviewFor(f);
+                          return (
+                            <>
+                              {trip && <a href={reviewUrl(trip)}>Trip report</a>}
+                              {detailed ? (
+                                <a href={reviewUrl(detailed)}>Review</a>
+                              ) : (
+                                f.review && <a href={`/reviews/${f.review}/`}>Review</a>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -598,6 +615,10 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
   .rev {
     text-align: right;
     white-space: nowrap;
+  }
+
+  .rev a + a {
+    margin-left: 0.9rem;
   }
 
   /* On narrow screens, each flight becomes a small stacked card. */
