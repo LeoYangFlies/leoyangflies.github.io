@@ -130,6 +130,21 @@ The guide goes here, in the same Markdown as reviews.
 
 Topics and their labels are set in `src/consts.ts` (`TIP_TOPICS`); only topics with at least one guide show up as filters.
 
+## Upcoming flights and the "in the air" banner
+
+Upcoming flights are kept **encrypted** in `private/upcoming.enc.json`, so the schedule is never public. The key is the `UPCOMING_FLIGHTS_KEY` secret (Settings → Secrets and variables → Actions); without it the file can't be read.
+
+Every 15 minutes a GitHub job checks the schedule. While a flight is in the air (from 15 minutes after scheduled departure until scheduled arrival), the home page shows "Leo is flying from *city* to *city*" with only the two cities: no flight number, times or position. When the flight lands the banner disappears, and 30 minutes later the flight is added to `src/data/flights.yaml` automatically.
+
+To change the schedule, edit a private copy and re-encrypt it with the key:
+
+```sh
+UPCOMING_FLIGHTS_KEY=... node scripts/upcoming.mjs decrypt > private/upcoming.yaml   # private/*.yaml is never committed
+UPCOMING_FLIGHTS_KEY=... node scripts/upcoming.mjs encrypt private/upcoming.yaml
+```
+
+Times in the schedule are local at each airport, as shown in the airline app.
+
 ## Editing on github.com
 
 Open any file and click the pencil icon to edit it. Click **Commit changes** to save, and the live site updates within a couple of minutes.

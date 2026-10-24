@@ -1,32 +1,84 @@
-# Builds the blog and publishes it to GitHub Pages every time you change something on the main branch.
+# Builds the blog and publishes it to GitHub Pages.
+#
+# - Every change pushed to main is published.
+# - Every 15 minutes a quick check runs: if Leo has just taken off or landed, the site is
+#   rebuilt so the "in the air" banner appears or disappears, and flights that have landed
+#   are added to the Logbook. If nothing changed, nothing is rebuilt.
+#
+# The upcoming schedule is encrypted (private/upcoming.enc.json). It can only be read with
+# the UPCOMING_FLIGHTS_KEY secret (Settings > Secrets and variables > Actions), and nothing
+# in these logs reveals it.
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
 
 permissions:
-  contents: read
+  contents: write # to add landed flights to the Logbook
   pages: write
   id-token: write
 
-# Only one deployment at a time; a newer change replaces one still in progress.
+# One run at a time; later runs wait their turn instead of cancelling a deploy.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.decide.outputs.deploy }}
     steps:
       - name: Check out the blog
         uses: actions/checkout@v7
+        with:
+          ref: main
+      - name: Install tools for the check
+        if: github.event_name != 'push'
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Decide whether to rebuild
+        id: decide
+        env:
+          UPCOMING_FLIGHTS_KEY: ${{ secrets.UPCOMING_FLIGHTS_KEY }}
+          # If you add your own domain later, put it here too:
+          # SITE_URL: https://www.example.com
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          node scripts/upcoming.mjs check
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Add landed flights to the Logbook
+        if: steps.decide.outputs.logged == 'true'
+        run: |
+          git config user.name "Leo Flies logbook"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/flights.yaml
+          git commit -m "Log flights after landing"
+          git push
+
+  build:
+    needs: check
+    if: needs.check.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    env:
+      UPCOMING_FLIGHTS_KEY: ${{ secrets.UPCOMING_FLIGHTS_KEY }}
+      # If you add your own domain later, uncomment this and put it in:
+      # SITE_URL: https://www.example.com
+    steps:
+      - name: Check out the blog
+        uses: actions/checkout@v7
+        with:
+          ref: main
       - name: Install, build, and upload the site
         uses: withastro/action@v6
-        # If you add your own domain later, uncomment these two lines and put it in:
-        # env:
-        #   SITE_URL: https://www.example.com
 
   deploy:
     needs: build

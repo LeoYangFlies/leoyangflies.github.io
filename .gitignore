@@ -12,3 +12,7 @@ npm-debug.log*
 
 # macOS
 .DS_Store
+
+# Upcoming flights: never commit the plaintext schedule
+private/*.yaml
+private/*.key

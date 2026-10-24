@@ -135,6 +135,35 @@ export const AIRPORTS: Record<string, Airport> = {
   CUN: { name: 'Cancún', city: 'Cancún', country: 'Mexico', lat: 21.0365, lon: -86.8771 },
 };
 
+// More major airports, so new trips usually work without edits.
+Object.assign(AIRPORTS, {
+  CGK: { name: 'Soekarno-Hatta', city: 'Jakarta', country: 'Indonesia', lat: -6.1256, lon: 106.6559 },
+  MNL: { name: 'Ninoy Aquino', city: 'Manila', country: 'Philippines', lat: 14.5086, lon: 121.0198 },
+  CEB: { name: 'Mactan-Cebu', city: 'Cebu', country: 'Philippines', lat: 10.3075, lon: 123.9794 },
+  HAN: { name: 'Noi Bai', city: 'Hanoi', country: 'Vietnam', lat: 21.2212, lon: 105.8072 },
+  SGN: { name: 'Tan Son Nhat', city: 'Ho Chi Minh City', country: 'Vietnam', lat: 10.8188, lon: 106.652 },
+  HKT: { name: 'Phuket', city: 'Phuket', country: 'Thailand', lat: 8.1132, lon: 98.3169 },
+  CNX: { name: 'Chiang Mai', city: 'Chiang Mai', country: 'Thailand', lat: 18.7668, lon: 98.9626 },
+  PEN: { name: 'Penang', city: 'Penang', country: 'Malaysia', lat: 5.2971, lon: 100.277 },
+  DEL: { name: 'Indira Gandhi', city: 'Delhi', country: 'India', lat: 28.5562, lon: 77.1 },
+  BOM: { name: 'Chhatrapati Shivaji Maharaj', city: 'Mumbai', country: 'India', lat: 19.0896, lon: 72.8656 },
+  AUH: { name: 'Zayed', city: 'Abu Dhabi', country: 'UAE', lat: 24.433, lon: 54.6511 },
+  CAI: { name: 'Cairo Intl', city: 'Cairo', country: 'Egypt', lat: 30.1219, lon: 31.4056 },
+  JNB: { name: 'O. R. Tambo', city: 'Johannesburg', country: 'South Africa', lat: -26.1392, lon: 28.246 },
+  LIS: { name: 'Humberto Delgado', city: 'Lisbon', country: 'Portugal', lat: 38.7742, lon: -9.1342 },
+  ATH: { name: 'Eleftherios Venizelos', city: 'Athens', country: 'Greece', lat: 37.9364, lon: 23.9445 },
+  PRG: { name: 'Václav Havel', city: 'Prague', country: 'Czechia', lat: 50.1008, lon: 14.26 },
+  CPH: { name: 'Kastrup', city: 'Copenhagen', country: 'Denmark', lat: 55.618, lon: 12.6508 },
+  ARN: { name: 'Arlanda', city: 'Stockholm', country: 'Sweden', lat: 59.6498, lon: 17.9238 },
+  DUB: { name: 'Dublin', city: 'Dublin', country: 'Ireland', lat: 53.4264, lon: -6.2499 },
+  YUL: { name: 'Trudeau', city: 'Montreal', country: 'Canada', lat: 45.4706, lon: -73.7408 },
+  AUS: { name: 'Austin-Bergstrom', city: 'Austin', country: 'USA', lat: 30.1975, lon: -97.6664 },
+  PDX: { name: 'Portland', city: 'Portland', country: 'USA', lat: 45.5898, lon: -122.5951 },
+  BNE: { name: 'Brisbane', city: 'Brisbane', country: 'Australia', lat: -27.3842, lon: 153.1175 },
+  PER: { name: 'Perth', city: 'Perth', country: 'Australia', lat: -31.9385, lon: 115.9672 },
+  AKL: { name: 'Auckland', city: 'Auckland', country: 'New Zealand', lat: -37.0082, lon: 174.785 },
+} satisfies Record<string, Airport>);
+
 export function getAirport(code: string): Airport {
   const airport = AIRPORTS[code.toUpperCase()];
   if (!airport) {

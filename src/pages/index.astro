@@ -5,6 +5,8 @@ import Postmark from '../components/Postmark.astro';
 import ReviewItem from '../components/ReviewItem.astro';
 import RouteMap from '../components/RouteMap.astro';
 import TipItem from '../components/TipItem.astro';
+import FlightNow from '../components/FlightNow.astro';
+import { getNow } from '../lib/now';
 import { SITE_DESCRIPTION, TIPS_TITLE } from '../consts';
 import { getReviews, reviewKind, reviewUrl, postmarkText, whereShort, whereLong } from '../lib/reviews';
 import { getStats, fmt } from '../lib/flights';
@@ -15,12 +17,14 @@ const reviews = await getReviews();
 const latest = reviews.find((r) => r.data.category === 'trip') ?? reviews[0];
 const recent = reviews.filter((r) => r !== latest).slice(0, 6);
 const stats = getStats();
+const now = getNow();
 const tips = (await getTips()).slice(0, 3);
 const stamp = latest ? postmarkText(latest) : undefined;
 ---
 
 <Base>
   <div class="wrap">
+    {now.flying && <FlightNow from={now.from} to={now.to} />}
     <p class="intro">{SITE_DESCRIPTION}</p>
 
     {
