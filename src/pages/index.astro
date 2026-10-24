@@ -2,15 +2,17 @@
 import Base from '../layouts/Base.astro';
 import Cover from '../components/Cover.astro';
 import Postmark from '../components/Postmark.astro';
-import Rating from '../components/Rating.astro';
 import ReviewItem from '../components/ReviewItem.astro';
+import RouteMap from '../components/RouteMap.astro';
 import { SITE_DESCRIPTION } from '../consts';
-import { getReviews, groupByCountry, categoryLabel, reviewUrl } from '../lib/reviews';
+import { getReviews, reviewKind, reviewUrl, postmarkText, whereShort, whereLong } from '../lib/reviews';
+import { getStats, fmt } from '../lib/flights';
 
 const reviews = await getReviews();
 const [latest, ...rest] = reviews;
 const recent = rest.slice(0, 6);
-const places = groupByCountry(reviews);
+const stats = getStats();
+const stamp = latest ? postmarkText(latest) : undefined;
 ---
 
 <Base>
@@ -18,33 +20,27 @@ const places = groupByCountry(reviews);
     <p class="intro">{SITE_DESCRIPTION}</p>
 
     {
-      latest ? (
+      latest && stamp ? (
         <article class="feature">
           <a class="feature-cover" href={reviewUrl(latest)} tabindex="-1" aria-hidden="true">
             <Cover
               image={latest.data.cover}
               alt=""
-              place={latest.data.place}
+              label={whereShort(latest)}
               ratio="16 / 9"
               sizes="(min-width: 72rem) 70rem, 100vw"
               loading="eager"
             />
           </a>
           <div class="feature-text">
-            <Postmark
-              class="feature-stamp"
-              place={latest.data.place}
-              country={latest.data.country}
-              date={latest.data.published}
-            />
+            <Postmark class="feature-stamp" top={stamp.top} bottom={stamp.bottom} date={latest.data.published} />
             <p class="feature-kind">
-              Newest in {categoryLabel(latest.data.category).toLowerCase()}, from {latest.data.place}
+              Latest {reviewKind(latest.data.category).toLowerCase()} review: {whereLong(latest)}
             </p>
             <h1 class="feature-title">
               <a href={reviewUrl(latest)}>{latest.data.title}</a>
             </h1>
             <p class="feature-desc">{latest.data.description}</p>
-            {latest.data.rating !== undefined && <Rating value={latest.data.rating} />}
           </div>
         </article>
       ) : (
@@ -72,24 +68,21 @@ const places = groupByCountry(reviews);
     }
 
     {
-      places.length > 0 && (
-        <section class="places" aria-labelledby="places-heading">
+      stats.count > 0 && (
+        <section class="logbook" aria-labelledby="logbook-heading">
           <div class="section-head">
-            <h2 id="places-heading">Where I've been</h2>
-            <a href="/places/">All places</a>
+            <h2 id="logbook-heading">Logbook</h2>
+            <a href="/logbook/">All flights and stats</a>
           </div>
-          <ul class="place-list">
-            {places.map((p) => (
-              <li>
-                <a href={`/places/#${p.slug}`}>
-                  <span class="place-name">{p.country}</span>
-                  <span class="place-count">
-                    {p.reviews.length} {p.reviews.length === 1 ? 'review' : 'reviews'}
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
+          <div class="logbook-body">
+            <a class="logbook-map" href="/logbook/" tabindex="-1" aria-hidden="true">
+              <RouteMap routes={stats.routes} airports={stats.airports} labels={false} />
+            </a>
+            <p class="logbook-totals">
+              {fmt(stats.count)} {stats.count === 1 ? 'flight' : 'flights'}, {fmt(stats.km)} km, and{' '}
+              {stats.airports.length} airports so far.
+            </p>
+          </div>
         </section>
       )
     }
@@ -189,7 +182,7 @@ const places = groupByCountry(reviews);
 
   /* Sections */
   .recent,
-  .places {
+  .logbook {
     margin-top: 4.5rem;
   }
 
@@ -218,37 +211,30 @@ const places = groupByCountry(reviews);
     gap: 2.2rem 3rem;
   }
 
-  .place-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+  .logbook-body {
+    display: grid;
+    gap: 1.25rem 3rem;
+    align-items: center;
   }
 
-  .place-list a {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.6rem;
-    padding: 0.55rem 1rem;
-    border: 1.5px solid var(--rule);
-    border-radius: 999px;
-    color: var(--ink);
-    text-decoration: none;
+  @media (min-width: 56rem) {
+    .logbook-body {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
   }
 
-  .place-list a:hover {
-    border-color: var(--ink);
+  .logbook-map {
+    display: block;
+    max-width: 30rem;
+
+
   }
 
-  .place-name {
+  .logbook-totals {
     font-family: var(--font-display);
-    font-size: 1.1rem;
-  }
-
-  .place-count {
-    font-size: var(--step--1);
-    color: var(--muted);
+    font-size: var(--step-2);
+    line-height: 1.35;
+    color: var(--ink);
+    max-width: 22ch;
   }
 </style>

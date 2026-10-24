@@ -1,52 +1,88 @@
-# Postmarked: a travel review blog
+# Leo Flies
 
-A static travel blog built with [Astro](https://astro.build). It's published free on GitHub Pages and updates automatically whenever you change a file on GitHub.
+Leo Yang's flight review blog, built with [Astro](https://astro.build) and published free on GitHub Pages at <https://leoyangflies.github.io>. It updates automatically within a couple of minutes whenever a file here changes.
 
 ## Where things live
 
 | What | Where |
 | --- | --- |
-| Blog name, tagline, your name, social links | `src/consts.ts` |
+| Blog name, tagline, author, social links | `src/consts.ts` |
 | Reviews (one Markdown file each) | `src/content/reviews/` |
 | Photos for reviews | `src/content/reviews/images/` |
-| About page | `src/pages/about.md` |
+| Flight log behind the Logbook page | `src/data/flights.yaml` |
+| Airports the site knows (codes, cities, coordinates) | `src/data/airports.ts` |
+| About page | `src/pages/about.astro` |
 | Colors and fonts | `src/styles/global.css` (the `:root` section at the top) |
 
-## Adding a review
+## Logging a flight
 
-Create a new file in `src/content/reviews/`, for example `tokyo-capsule-hotel.md`. The file name becomes the web address: `/reviews/tokyo-capsule-hotel/`. Start it with settings between two `---` lines, then write the review below:
+Add a block to `src/data/flights.yaml`. Every flight belongs here, whether or not you review it:
+
+```yaml
+- date: 2026-08-20
+  airline: China Eastern
+  flight: MU587
+  from: PVG
+  to: JFK
+  aircraft: Boeing 777-300ER
+  cabin: Economy        # Economy, Premium Economy, Business or First
+  seat: 45K
+  duration: 14h 35m
+  review: pvg-jfk-august-2026   # optional: links to a review's file name
+```
+
+Distances, totals, the map and all the stats are worked out automatically. If the build complains about an unknown airport code, add that airport to `src/data/airports.ts`.
+
+## Writing a review
+
+Create a file in `src/content/reviews/`, for example `pvg-jfk-august-2026.md`. The file name becomes the web address: `/reviews/pvg-jfk-august-2026/`.
+
+A flight review starts like this:
 
 ```markdown
 ---
-title: 'A capsule hotel near the station'
+title: 'Fifteen hours in economy, Shanghai to New York'
 description: 'One sentence shown in lists and link previews.'
-published: 2026-11-02
-place: Tokyo
-country: Japan
-category: stay          # trip, stay, food, sight or transport
-visited: October 2026   # optional
-rating: 4.5             # optional, 0 to 5 in half steps
+published: 2026-09-02
+category: flight          # flight, airport, lounge or destination
+airline: China Eastern
+flight: MU587
+from: PVG
+to: JFK
+aircraft: Boeing 777-300ER
+cabin: Economy
+seat: 45K
+duration: 14h 35m
+when: August 2026
 verdict: 'Optional one-sentence bottom line.'
-liked:                  # optional
-  - 'Spotless'
-disliked:               # optional
-  - 'Thin walls'
-cover: ./images/tokyo-capsule.jpg   # optional photo
-coverAlt: 'Rows of capsule pods'    # describe the photo
-draft: false            # true hides it from the live site
+liked:
+  - 'Something good'
+disliked:
+  - 'Something that could be better'
+cover: ./images/pvg-jfk-wing.jpg
+coverAlt: 'Describe the photo'
+draft: false              # true hides it from the live site
 ---
 
-Your review goes here. Use ## for headings, **bold**, - for bullet lists,
+The review goes here. Use ## for headings, **bold**, - for bullet lists,
 > for a pull quote, and ![description](./images/photo.jpg) for extra photos.
 ```
 
-Photos go in `src/content/reviews/images/`. Use JPGs straight from your phone; the site shrinks and converts them automatically.
+Airport, lounge and destination reviews use `place` and `country` instead of the flight fields:
 
-The five files named `sample-...` are placeholders. Delete them once you've written your own.
+```yaml
+category: lounge
+place: New York JFK
+country: USA
+```
 
-## Editing without installing anything
+Photos go in `src/content/reviews/images/`. Use JPGs straight from your phone; the site resizes and converts them automatically. Blur the barcode and booking code on any boarding pass before uploading.
 
-On github.com, open any file and click the pencil icon to edit it. Click **Commit changes** to save, and the live site updates within a couple of minutes. To add a photo, open `src/content/reviews/images/` and choose **Add file → Upload files**.
+Files named `sample-...` are placeholders. Delete them, and the `sample: true` flights in `flights.yaml`, once real content is in.
+
+## Editing on github.com
+
+Open any file and click the pencil icon to edit it. Click **Commit changes** to save, and the live site updates within a couple of minutes.
 
 ## Previewing on your own computer (optional)
 
@@ -55,5 +91,4 @@ This needs [Node.js](https://nodejs.org) 22 or newer:
 ```sh
 npm install
 npm run dev       # preview at http://localhost:4321
-npm run build     # build the final site into dist/
 ```

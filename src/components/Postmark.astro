@@ -1,29 +1,30 @@
 ---
-// A circular postmark stamp: place around the top, country around the bottom,
+// A circular postmark stamp: one line of text around the top, one around the bottom,
 // month and year in the middle, with wavy cancellation lines trailing off.
 interface Props {
-  place: string;
-  country: string;
+  top: string;
+  bottom: string;
   date: Date;
   bars?: boolean;
   class?: string;
 }
 
-const { place, country, date, bars = true, class: className } = Astro.props;
+const { top, bottom, date, bars = true, class: className } = Astro.props;
 const id = `pm-${Math.random().toString(36).slice(2, 9)}`;
 const month = date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
 const year = date.getUTCFullYear();
-const top = place.toUpperCase();
-const bottom = country.toUpperCase();
-// Shrink letter-spacing for long names so they fit the arc.
-const spacing = (s: string) => (s.length > 14 ? 1 : s.length > 9 ? 2.5 : 4);
+const topText = top.toUpperCase();
+const bottomText = bottom.toUpperCase();
+// Tighten letter-spacing and size for long text so it fits the arc.
+const spacing = (s: string) => (s.length > 16 ? 0.5 : s.length > 11 ? 1.5 : s.length > 8 ? 2.5 : 4);
+const size = (s: string, base: number) => (s.length > 18 ? base - 2 : base);
 ---
 
 <svg
   class:list={['postmark', className]}
   viewBox={bars ? '0 0 260 140' : '0 0 140 140'}
   role="img"
-  aria-label={`Postmarked ${place}, ${country}, ${month} ${year}`}
+  aria-label={`Postmarked ${top}, ${bottom}, ${month} ${year}`}
 >
   <defs>
     <path id={`${id}-top`} d="M 26 70 A 44 44 0 0 1 114 70" />
@@ -33,21 +34,23 @@ const spacing = (s: string) => (s.length > 14 ? 1 : s.length > 9 ? 2.5 : 4);
     <circle cx="70" cy="70" r="64" stroke-width="3" />
     <circle cx="70" cy="70" r="58" stroke-width="1.2" />
     <path d="M 30 50 H 110 M 30 92 H 110" stroke-width="1.2" />
-    {bars && (
-      <g stroke-width="3" stroke-linecap="round">
-        <path d="M 140 38 q 10 -7 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 18 0" />
-        <path d="M 140 58 q 10 -7 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 18 0" />
-        <path d="M 140 78 q 10 -7 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 18 0" />
-        <path d="M 140 98 q 10 -7 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 18 0" />
-      </g>
-    )}
+    {
+      bars && (
+        <g stroke-width="3" stroke-linecap="round">
+          <path d="M 140 38 q 10 -7 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 18 0" />
+          <path d="M 140 58 q 10 -7 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 18 0" />
+          <path d="M 140 78 q 10 -7 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 18 0" />
+          <path d="M 140 98 q 10 -7 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 18 0" />
+        </g>
+      )
+    }
   </g>
   <g fill="currentColor" font-family="var(--font-body)" font-weight="700">
-    <text font-size="11" letter-spacing={spacing(top)} text-anchor="middle">
-      <textPath href={`#${id}-top`} startOffset="50%">{top}</textPath>
+    <text font-size={size(topText, 11)} letter-spacing={spacing(topText)} text-anchor="middle">
+      <textPath href={`#${id}-top`} startOffset="50%">{topText}</textPath>
     </text>
-    <text font-size="10" letter-spacing={spacing(bottom)} text-anchor="middle" dominant-baseline="hanging">
-      <textPath href={`#${id}-bottom`} startOffset="50%">{bottom}</textPath>
+    <text font-size={size(bottomText, 10)} letter-spacing={spacing(bottomText)} text-anchor="middle" dominant-baseline="hanging">
+      <textPath href={`#${id}-bottom`} startOffset="50%">{bottomText}</textPath>
     </text>
     <text x="70" y="72" font-size="17" text-anchor="middle" letter-spacing="1.5">{month}</text>
     <text x="70" y="85" font-size="11" text-anchor="middle" font-weight="500" letter-spacing="2.5">{year}</text>

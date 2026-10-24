@@ -1,7 +1,7 @@
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
-import { getReviews, reviewUrl } from '../lib/reviews';
+import { getReviews, reviewUrl, categoryLabel, whereShort } from '../lib/reviews';
 
 export async function GET(context: APIContext) {
   const reviews = await getReviews();
@@ -14,7 +14,7 @@ export async function GET(context: APIContext) {
       description: r.data.description,
       pubDate: r.data.published,
       link: reviewUrl(r),
-      categories: [r.data.country, r.data.category],
+      categories: [categoryLabel(r.data.category), whereShort(r)].filter(Boolean),
     })),
   });
 }

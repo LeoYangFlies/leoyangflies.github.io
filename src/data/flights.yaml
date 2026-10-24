@@ -1,0 +1,78 @@
+# Leo's flight log: every flight, reviewed or not. The Logbook page is built from this file.
+#
+# Add one block per flight, newest or oldest first (order doesn't matter):
+#
+# - date: 2026-08-20          # departure date, YYYY-MM-DD
+#   airline: China Eastern
+#   flight: MU587             # optional
+#   from: PVG                 # airport codes; add new ones to src/data/airports.ts
+#   to: JFK
+#   aircraft: Boeing 777-300ER   # optional
+#   cabin: Economy            # optional: Economy, Premium Economy, Business or First
+#   seat: 45K                 # optional
+#   duration: 14h 35m         # optional, time in the air
+#   review: my-review-file    # optional: the review's file name, without .md
+#
+# The entries marked "sample: true" are placeholders. Delete them once real flights are in.
+
+- date: 2026-08-20
+  airline: Sample Airways
+  flight: SA101
+  from: PVG
+  to: JFK
+  aircraft: Boeing 777-300ER
+  cabin: Economy
+  seat: 45K
+  duration: 14h 20m
+  review: sample-pvg-jfk
+  sample: true
+
+- date: 2026-06-14
+  airline: Sample Airways
+  flight: SA102
+  from: JFK
+  to: PVG
+  aircraft: Boeing 777-300ER
+  cabin: Economy
+  duration: 15h 40m
+  sample: true
+
+- date: 2026-01-22
+  airline: Sample Airways
+  flight: SA101
+  from: PVG
+  to: JFK
+  aircraft: Airbus A350-900
+  cabin: Economy
+  duration: 14h 5m
+  sample: true
+
+- date: 2025-12-18
+  airline: Example Air
+  flight: EX88
+  from: JFK
+  to: ICN
+  aircraft: Airbus A380
+  cabin: Premium Economy
+  duration: 15h 10m
+  sample: true
+
+- date: 2025-12-19
+  airline: Example Air
+  flight: EX89
+  from: ICN
+  to: PVG
+  aircraft: Airbus A321
+  cabin: Economy
+  duration: 1h 55m
+  sample: true
+
+- date: 2025-08-25
+  airline: Sample Airways
+  flight: SA101
+  from: PVG
+  to: JFK
+  aircraft: Boeing 777-300ER
+  cabin: Economy
+  duration: 14h 25m
+  sample: true

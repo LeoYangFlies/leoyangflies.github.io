@@ -1,8 +1,7 @@
 ---
-// One review in a list: small cover, title, where, what kind, and the rating.
+// One review in a list: small cover, where, what kind, title and summary.
 import Cover from './Cover.astro';
-import Rating from './Rating.astro';
-import { categoryLabel, reviewUrl, type Review } from '../lib/reviews';
+import { reviewKind, reviewUrl, whereShort, whereLong, type Review } from '../lib/reviews';
 
 interface Props {
   review: Review;
@@ -12,20 +11,21 @@ interface Props {
 const { review, headingLevel = 'h3' } = Astro.props;
 const { data } = review;
 const Heading = headingLevel;
+const isFlight = data.category === 'flight';
 ---
 
 <article class="item" data-category={data.category}>
   <a class="thumb" href={reviewUrl(review)} tabindex="-1" aria-hidden="true">
-    <Cover image={data.cover} alt="" place={data.place} ratio="1 / 1" widths={[200, 400]} sizes="8rem" />
+    <Cover image={data.cover} alt="" label={whereShort(review)} ratio="1 / 1" widths={[200, 400]} sizes="8rem" />
   </a>
   <div class="body">
     <p class="where">
-      <span>{data.place}, {data.country}</span>
-      <span class="kind">{categoryLabel(data.category)}</span>
+      <span class="kind">{reviewKind(data.category)}</span>
+      <span>{isFlight ? whereShort(review) : whereLong(review)}</span>
+      {isFlight && data.airline && <span>{[data.airline, data.flight].filter(Boolean).join(' ')}</span>}
     </p>
     <Heading class="title"><a href={reviewUrl(review)}>{data.title}</a></Heading>
     <p class="desc">{data.description}</p>
-    {data.rating !== undefined && <Rating value={data.rating} />}
   </div>
 </article>
 

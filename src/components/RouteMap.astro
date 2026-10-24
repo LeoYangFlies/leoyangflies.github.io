@@ -1,0 +1,229 @@
+---
+// A map of every route flown, drawn as great-circle arcs on a globe that turns and zooms
+// to fit wherever the flights go. Rendered to plain SVG when the site is built, so it
+// costs visitors nothing.
+import {
+  geoAzimuthalEquidistant,
+  geoDistance,
+  geoGraticule10,
+  geoInterpolate,
+  geoOrthographic,
+  geoPath,
+} from 'd3-geo';
+import { feature } from 'topojson-client';
+import land110 from 'world-atlas/land-110m.json';
+import { getAirport } from '../data/airports';
+import type { Route } from '../lib/flights';
+
+interface Props {
+  routes: Route[];
+  airports: string[];
+  labels?: boolean;
+  animate?: boolean;
+  class?: string;
+}
+
+const { routes, airports, labels = true, animate = false, class: className } = Astro.props;
+
+const W = 600;
+const H = 600;
+const uid = Math.random().toString(36).slice(2, 8);
+
+// Every point the drawing has to show: the airports, plus points along each great circle
+// (routes between Asia and North America bend up toward the Arctic).
+const points: [number, number][] = airports.map((c) => [getAirport(c).lon, getAirport(c).lat]);
+for (const r of routes) {
+  const a = getAirport(r.a);
+  const b = getAirport(r.b);
+  const between = geoInterpolate([a.lon, a.lat], [b.lon, b.lat]);
+  for (let t = 0; t <= 1; t += 0.05) points.push(between(t) as [number, number]);
+}
+
+// Turn the globe to face the middle of the two points farthest apart, so the whole
+// spread of routes sits centred. Limit the tilt so north stays roughly up.
+const rad = Math.PI / 180;
+let pair: [[number, number], [number, number]] = [points[0], points[0]];
+let widest = -1;
+for (const p of points) {
+  for (const q of points) {
+    const d = geoDistance(p, q);
+    if (d > widest) {
+      widest = d;
+      pair = [p, q];
+    }
+  }
+}
+const mid = geoInterpolate(pair[0], pair[1])(0.5);
+const center: [number, number] = [mid[0], Math.max(-55, Math.min(55, mid[1]))];
+const farthest = Math.max(...points.map((p) => geoDistance(center, p))) / rad;
+
+// A globe (orthographic) reads best. If the routes reach round the back of the Earth,
+// switch to a flattened disc (azimuthal equidistant) that can show the whole world.
+const projection = (farthest < 82 ? geoOrthographic() : geoAzimuthalEquidistant()).rotate([-center[0], -center[1]]);
+const frame: [[number, number], [number, number]] = [
+  [14, 14],
+  [W - 14, H - 14],
+];
+if (farthest < 40) {
+  // Regional routes only: zoom in on them, with room around the edges.
+  projection.fitExtent(
+    [
+      [70, 70],
+      [W - 70, H - 70],
+    ],
+    { type: 'MultiPoint', coordinates: points },
+  );
+  if (projection.scale() > 2400) projection.scale(2400).translate([W / 2, H / 2]);
+} else {
+  // Long-haul: show the whole globe.
+  projection.fitExtent(frame, { type: 'Sphere' });
+}
+const path = geoPath(projection);
+const viewBox = `0 0 ${W} ${H}`;
+const graticule = path(geoGraticule10()) ?? '';
+
+const land = path(feature(land110 as any, (land110 as any).objects.land) as any) ?? '';
+const sphere = path({ type: 'Sphere' }) ?? '';
+
+const max = Math.max(1, ...routes.map((r) => r.count));
+const arcs = routes.map((r) => {
+  const a = getAirport(r.a);
+  const b = getAirport(r.b);
+  return {
+    d: path({ type: 'LineString', coordinates: [[a.lon, a.lat], [b.lon, b.lat]] }) ?? '',
+    width: 1.6 + 2.4 * (r.count / max),
+    label: `${r.a} – ${r.b}: ${r.count} ${r.count === 1 ? 'flight' : 'flights'}`,
+  };
+});
+
+const dots = airports.map((code) => {
+  const ap = getAirport(code);
+  const [x, y] = projection([ap.lon, ap.lat])!;
+  return { code, city: ap.city, x, y };
+});
+
+// Nudge labels apart when airports are close together (e.g. JFK and EWR).
+const placed: { x: number; y: number }[] = [];
+const labelled = dots.map((d) => {
+  let dy = -9;
+  while (placed.some((p) => Math.abs(p.x - d.x) < 34 && Math.abs(p.y - (d.y + dy)) < 13)) dy -= 13;
+  placed.push({ x: d.x, y: d.y + dy });
+  return { ...d, dy };
+});
+
+const summary = routes.map((r) => `${r.a}–${r.b} (${r.count})`).join(', ');
+---
+
+<figure class:list={['route-map', className, animate && 'animate']}>
+  <svg viewBox={viewBox} role="img" aria-label={`Map of routes flown: ${summary}`}>
+    <defs>
+      <clipPath id={`map-sphere-${uid}`}><path d={sphere} /></clipPath>
+    </defs>
+    <g clip-path={`url(#map-sphere-${uid})`}>
+      <path class="sea" d={sphere} />
+      <path class="graticule" d={graticule} />
+      <path class="land" d={land} />
+    </g>
+    <g class="arcs">
+      {arcs.map((a, i) => (
+        <path d={a.d} stroke-width={a.width} pathLength="1" style={`--i:${i}`}>
+          <title>{a.label}</title>
+        </path>
+      ))}
+    </g>
+    <g class="airports">
+      {labelled.map((d) => (
+        <g>
+          <circle cx={d.x} cy={d.y} r="4.5">
+            <title>{d.code}, {d.city}</title>
+          </circle>
+          {labels && (
+            <text x={d.x} y={d.y + d.dy} text-anchor="middle">
+              {d.code}
+            </text>
+          )}
+        </g>
+      ))}
+    </g>
+  </svg>
+</figure>
+
+<style>
+  .route-map {
+    margin: 0;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .sea {
+    fill: var(--surface);
+    stroke: var(--rule);
+    stroke-width: 1;
+  }
+
+  .graticule {
+    fill: none;
+    stroke: var(--rule);
+    stroke-width: 0.5;
+    opacity: 0.7;
+  }
+
+  .land {
+    fill: var(--paper-deep);
+    stroke: var(--rule);
+    stroke-width: 0.6;
+  }
+
+  .arcs path {
+    fill: none;
+    stroke: var(--red);
+    stroke-linecap: round;
+  }
+
+  .airports circle {
+    fill: var(--ink);
+    stroke: var(--surface);
+    stroke-width: 2;
+  }
+
+  .airports text {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 700;
+    fill: var(--ink);
+    paint-order: stroke;
+    stroke: var(--surface);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+  }
+
+  /* One moment of motion: routes draw themselves in when the Logbook opens. */
+  @media (prefers-reduced-motion: no-preference) {
+    .animate .arcs path {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: draw 1.6s cubic-bezier(0.45, 0, 0.2, 1) forwards;
+      animation-delay: calc(0.15s + var(--i) * 0.18s);
+    }
+    .animate .airports {
+      opacity: 0;
+      animation: appear 0.5s ease-out 0.1s forwards;
+    }
+  }
+
+  @keyframes draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes appear {
+    to {
+      opacity: 1;
+    }
+  }
+</style>

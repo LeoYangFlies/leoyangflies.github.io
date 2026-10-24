@@ -4,8 +4,8 @@ import { getImage } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import Cover from '../../components/Cover.astro';
 import Postmark from '../../components/Postmark.astro';
-import Rating from '../../components/Rating.astro';
-import { getReviews, categoryLabel, formatDate, reviewUrl, slugify, type Review } from '../../lib/reviews';
+import { getAirport, distanceKm } from '../../data/airports';
+import { getReviews, categoryLabel, formatDate, reviewUrl, postmarkText, whereLong, whereShort, type Review } from '../../lib/reviews';
 
 export async function getStaticPaths() {
   const reviews = await getReviews();
@@ -25,7 +25,25 @@ const { review, newer, older } = Astro.props;
 const { data } = review;
 const { Content } = await render(review);
 const ogImage = data.cover ? (await getImage({ src: data.cover, width: 1200, format: 'jpg' })).src : undefined;
-const hasVerdict = data.rating !== undefined || data.verdict || data.liked.length || data.disliked.length;
+const hasSummary = data.verdict || data.liked.length || data.disliked.length;
+const isFlight = data.category === 'flight' && data.from && data.to;
+const stamp = postmarkText(review);
+
+// The facts row under the title: flight details for flights, place details otherwise.
+const facts: { label: string; value: string }[] = isFlight
+  ? [
+      { label: 'Route', value: `${getAirport(data.from!).city} ${data.from} to ${getAirport(data.to!).city} ${data.to}` },
+      { label: 'Flight', value: [data.airline, data.flight].filter(Boolean).join(' ') },
+      ...(data.aircraft ? [{ label: 'Aircraft', value: data.aircraft }] : []),
+      ...(data.cabin ? [{ label: 'Cabin', value: data.seat ? `${data.cabin}, seat ${data.seat}` : data.cabin }] : []),
+      ...(data.duration ? [{ label: 'Flight time', value: data.duration }] : []),
+      { label: 'Distance', value: `${Math.round(distanceKm(data.from!, data.to!)).toLocaleString('en-US')} km` },
+      ...(data.when ? [{ label: 'Flown', value: data.when }] : []),
+    ]
+  : [
+      { label: 'Where', value: whereLong(review) },
+      ...(data.when ? [{ label: 'Visited', value: data.when }] : []),
+    ];
 ---
 
 <Base title={data.title} description={data.description} image={ogImage} type="article">
@@ -34,37 +52,19 @@ const hasVerdict = data.rating !== undefined || data.verdict || data.liked.lengt
       <p class="crumbs">
         <a href="/reviews/">Reviews</a>
         <span aria-hidden="true">/</span>
-        <a href={`/places/#${slugify(data.country)}`}>{data.country}</a>
+        <a href={`/reviews/#${data.category}`}>{categoryLabel(data.category)}</a>
       </p>
       <h1>{data.title}</h1>
       <p class="lede">{data.description}</p>
 
       <dl class="facts">
-        <div>
-          <dt>Where</dt>
-          <dd>{data.place}, {data.country}</dd>
-        </div>
-        <div>
-          <dt>Type</dt>
-          <dd>{categoryLabel(data.category)}</dd>
-        </div>
         {
-          data.visited && (
+          facts.map((f) => (
             <div>
-              <dt>Visited</dt>
-              <dd>{data.visited}</dd>
+              <dt>{f.label}</dt>
+              <dd>{f.value}</dd>
             </div>
-          )
-        }
-        {
-          data.rating !== undefined && (
-            <div>
-              <dt>Rating</dt>
-              <dd>
-                <Rating value={data.rating} />
-              </dd>
-            </div>
-          )
+          ))
         }
       </dl>
     </header>
@@ -75,7 +75,7 @@ const hasVerdict = data.rating !== undefined || data.verdict || data.liked.lengt
           <Cover
             image={data.cover}
             alt={data.coverAlt ?? ''}
-            place={data.place}
+            label={whereShort(review)}
             ratio="16 / 9"
             sizes="(min-width: 72rem) 70rem, 100vw"
             loading="eager"
@@ -90,11 +90,10 @@ const hasVerdict = data.rating !== undefined || data.verdict || data.liked.lengt
       </div>
 
       {
-        hasVerdict && (
+        hasSummary && (
           <aside class="verdict" aria-labelledby="verdict-heading">
-            <Postmark class="verdict-stamp" place={data.place} country={data.country} date={data.published} bars={false} />
-            <h2 id="verdict-heading">The verdict</h2>
-            {data.rating !== undefined && <Rating value={data.rating} size="large" />}
+            <Postmark class="verdict-stamp" top={stamp.top} bottom={stamp.bottom} date={data.published} bars={false} />
+            <h2 id="verdict-heading">In short</h2>
             {data.verdict && <p class="verdict-line">{data.verdict}</p>}
             {data.liked.length > 0 && (
               <div class="pros">
@@ -230,9 +229,9 @@ const hasVerdict = data.rating !== undefined || data.verdict || data.liked.lengt
 
   .verdict :global(.verdict-stamp) {
     position: absolute;
-    right: -1.4rem;
-    top: -1.4rem;
-    width: 7.5rem;
+    right: -2rem;
+    top: -2rem;
+    width: 6.5rem;
     color: var(--red);
     opacity: 0.35;
     transform: rotate(14deg);
@@ -241,6 +240,11 @@ const hasVerdict = data.rating !== undefined || data.verdict || data.liked.lengt
 
   .verdict h2 {
     font-size: var(--step-2);
+    padding-right: 3rem;
+  }
+
+  .verdict-line {
+    padding-right: 1.5rem;
   }
 
   .verdict-line {

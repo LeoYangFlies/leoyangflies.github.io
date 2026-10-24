@@ -1,0 +1,43 @@
+---
+import Page from '../layouts/Page.astro';
+import { getStats, fmt } from '../lib/flights';
+
+const stats = getStats();
+---
+
+<Page frontmatter={{ title: 'About', description: 'Who writes Leo Flies, and what the reviews cover.' }}>
+  <p>
+    I'm Leo Yang, a high schooler from Shanghai who goes to school on Long Island. That makes me double-hubbed: home is
+    split between New York and Shanghai, and a surprising amount of my life happens somewhere over the Pacific in between.
+  </p>
+
+  <p>
+    When you fly the same long route again and again, you start to notice everything: which seats are actually worth
+    choosing, which meal is worth waking up for, which crews make fifteen hours feel shorter, and which entertainment
+    systems freeze halfway through a movie. This site is where I write all of that down.
+  </p>
+
+  <p>
+    Mostly you'll find flight reviews, from the check-in desk to the baggage carousel. Sometimes I'll also cover the
+    airports, the lounges, and the places I end up once I land.
+  </p>
+
+  <h2>How the reviews work</h2>
+
+  <p>
+    Every review is of a flight I actually took. There are no scores here: a number can't tell you whether a flight
+    suits you, so instead each review ends with a short summary of what I liked and what could be better.
+  </p>
+
+  {
+    stats.count > 0 && (
+      <>
+        <h2>The numbers</h2>
+        <p>
+          So far I've logged {fmt(stats.count)} {stats.count === 1 ? 'flight' : 'flights'} and {fmt(stats.km)} km. Every
+          one of them, with routes, airlines and aircraft, is in the <a href="/logbook/">Logbook</a>.
+        </p>
+      </>
+    )
+  }
+</Page>

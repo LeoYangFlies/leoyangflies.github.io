@@ -1,0 +1,388 @@
+---
+import Base from '../layouts/Base.astro';
+import RouteMap from '../components/RouteMap.astro';
+import { getFlights, getStats, formatMinutes, fmt } from '../lib/flights';
+import { getAirport } from '../data/airports';
+
+const flights = getFlights();
+const s = getStats(flights);
+
+const breakdowns = [
+  { title: 'Routes', note: 'Both directions together', rows: s.routes.map((r) => ({ name: `${r.a} – ${r.b}`, sub: `${getAirport(r.a).city} and ${getAirport(r.b).city}`, count: r.count })) },
+  { title: 'Airlines', rows: s.airlines.map((r) => ({ ...r, sub: undefined })) },
+  { title: 'Aircraft', rows: s.aircraft.map((r) => ({ ...r, sub: undefined })) },
+  { title: 'Cabins', rows: s.cabins.map((r) => ({ ...r, sub: undefined })) },
+  { title: 'By year', rows: s.years.map((r) => ({ ...r, sub: undefined })) },
+].filter((b) => b.rows.length > 0);
+
+const shortDate = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
+---
+
+<Base title="Logbook" description={`Every flight Leo has logged: ${fmt(s.count)} flights and ${fmt(s.km)} km so far.`}>
+  <div class="wrap">
+    <header class="head">
+      <h1>Logbook</h1>
+      {
+        s.count > 0 ? (
+          <p class="totals">
+            {fmt(s.count)} {s.count === 1 ? 'flight' : 'flights'} and {fmt(s.km)} km ({fmt(s.miles)} miles) in the air so far
+            {laps ? <>, enough to go around the Earth {laps} times.</> : '.'}
+          </p>
+        ) : (
+          <p class="totals">No flights logged yet. Add them in src/data/flights.yaml.</p>
+        )
+      }
+      {s.hasSamples && <p class="notice">These are sample flights for now. Real ones are on the way.</p>}
+    </header>
+
+    {
+      s.count > 0 && (
+        <div class="overview">
+        <RouteMap routes={s.routes} airports={s.airports} animate class="map" />
+        <dl class="facts">
+          {s.minutes > 0 && (
+            <div>
+              <dt>Time in the air</dt>
+              <dd>
+                {fmt(Math.round(s.minutes / 60))} hours{!s.allTimed && <span class="fine"> (flights with a logged time)</span>}
+              </dd>
+            </div>
+          )}
+          <div>
+            <dt>Airports</dt>
+            <dd>{s.airports.length}</dd>
+          </div>
+          <div>
+            <dt>Countries and regions</dt>
+            <dd>{s.countries.length}</dd>
+          </div>
+          <div>
+            <dt>Airlines</dt>
+            <dd>{s.airlines.length}</dd>
+          </div>
+          {s.longest && (
+            <div>
+              <dt>Longest flight</dt>
+              <dd>
+                {s.longest.from} – {s.longest.to}, {fmt(Math.round(s.longest.km))} km
+              </dd>
+            </div>
+          )}
+        </dl>
+        </div>
+      )
+    }
+
+    {
+      breakdowns.length > 0 && (
+        <div class="breakdowns">
+          {breakdowns.map((b) => {
+            const max = Math.max(...b.rows.map((r) => r.count));
+            return (
+              <section aria-labelledby={`bd-${b.title}`}>
+                <h2 id={`bd-${b.title}`}>{b.title}</h2>
+                {b.note && <p class="bd-note">{b.note}</p>}
+                <ol class="bars">
+                  {b.rows.slice(0, 8).map((r) => (
+                    <li>
+                      <span class="bar-name">
+                        {r.name}
+                        {r.sub && <span class="bar-sub">{r.sub}</span>}
+                      </span>
+                      <span class="bar-count">{r.count}</span>
+                      <span class="bar-track" aria-hidden="true">
+                        <span class="bar-fill" style={`width: ${(r.count / max) * 100}%`} />
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+                {b.rows.length > 8 && <p class="bd-note">and {b.rows.length - 8} more</p>}
+              </section>
+            );
+          })}
+        </div>
+      )
+    }
+
+    {
+      s.count > 0 && (
+        <section class="log" aria-labelledby="all-flights">
+          <h2 id="all-flights">Every flight</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Flight</th>
+                  <th scope="col">Route</th>
+                  <th scope="col">Aircraft</th>
+                  <th scope="col">Cabin</th>
+                  <th scope="col" class="num">Distance</th>
+                  <th scope="col" class="num">Time</th>
+                  <th scope="col"><span class="visually-hidden">Review</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {flights.map((f) => (
+                  <tr>
+                    <td class="date" data-label="Date">{shortDate(f.date)}</td>
+                    <td data-label="Flight">
+                      {f.airline}
+                      {f.flight && <span class="code"> {f.flight}</span>}
+                    </td>
+                    <td class="route" data-label="Route">
+                      <span title={`${getAirport(f.from).city} to ${getAirport(f.to).city}`}>
+                        {f.from} – {f.to}
+                      </span>
+                    </td>
+                    <td data-label="Aircraft">{f.aircraft ?? ''}</td>
+                    <td data-label="Cabin">{f.cabin ?? ''}{f.seat && <span class="fine">, seat {f.seat}</span>}</td>
+                    <td class="num" data-label="Distance">{fmt(Math.round(f.km))} km</td>
+                    <td class="num" data-label="Time">{f.minutes !== undefined ? formatMinutes(f.minutes) : ''}</td>
+                    <td class="rev">{f.review && <a href={`/reviews/${f.review}/`}>Read review</a>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  .head {
+    display: grid;
+    gap: 1rem;
+    margin: 1.5rem 0 2rem;
+  }
+
+  .head h1 {
+    font-size: var(--step-4);
+  }
+
+  .totals {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    line-height: 1.35;
+    color: var(--ink);
+    max-width: 34ch;
+  }
+
+  .notice {
+    font-size: var(--step--1);
+    color: var(--muted);
+    border-left: 3px solid var(--red);
+    padding-left: 0.75rem;
+  }
+
+   .overview {
+    display: grid;
+    gap: 1.5rem 4rem;
+    align-items: center;
+  }
+
+  .overview :global(.map) {
+    width: 100%;
+    max-width: 36rem;
+    justify-self: center;
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2.6rem;
+    margin: 0;
+  }
+
+  @media (min-width: 56rem) {
+    .overview {
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    }
+    .facts {
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+  }
+
+  .facts dt {
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .facts dd {
+    margin: 0.15rem 0 0;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: var(--step-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fine {
+    font-weight: 400;
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .breakdowns {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    gap: 2.5rem 3rem;
+    margin-top: 4rem;
+  }
+
+  .breakdowns h2,
+  .log h2 {
+    font-size: var(--step-2);
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .bd-note {
+    font-size: var(--step--1);
+    color: var(--muted);
+    margin-top: 0.5rem;
+  }
+
+  .bars {
+    list-style: none;
+    margin: 0.4rem 0 0;
+    padding: 0;
+  }
+
+  .bars li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.3rem 1rem;
+    padding: 0.65rem 0 0.7rem;
+  }
+
+  .bar-name {
+    color: var(--ink);
+    font-weight: 550;
+  }
+
+  .bar-sub {
+    display: block;
+    font-weight: 400;
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .bar-count {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    align-self: end;
+  }
+
+  .bar-track {
+    grid-column: 1 / -1;
+    height: 6px;
+  }
+
+  .bar-fill {
+    display: block;
+    height: 100%;
+    min-width: 6px;
+    background: var(--blue);
+    border-radius: 0 3px 3px 0;
+  }
+
+  .log {
+    margin-top: 4rem;
+  }
+
+  .table-wrap {
+    margin-top: 0.5rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 600;
+    font-size: var(--step--1);
+    color: var(--muted);
+    padding: 0.6rem 0.8rem 0.6rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  td {
+    padding: 0.8rem 0.8rem 0.8rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .date,
+  .route {
+    white-space: nowrap;
+  }
+
+  .route {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .code {
+    color: var(--muted);
+  }
+
+  .rev {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* On narrow screens, each flight becomes a small stacked card. */
+  @media (max-width: 48rem) {
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+    table,
+    tbody,
+    tr,
+    td {
+      display: block;
+    }
+    tr {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    td {
+      border: 0;
+      padding: 0;
+      text-align: left !important;
+    }
+    td:empty {
+      display: none;
+    }
+    td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    .rev {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

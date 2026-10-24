@@ -9,11 +9,11 @@ const reviews = await getReviews();
 const used = (Object.keys(CATEGORIES) as Category[]).filter((c) => reviews.some((r) => r.data.category === c));
 ---
 
-<Base title="Reviews" description="Every place I've reviewed, newest first.">
+<Base title="Reviews" description="Every flight, airport and lounge I've reviewed, newest first.">
   <div class="wrap">
     <header class="page-head">
       <h1>Reviews</h1>
-      <p>Every place I've reviewed, newest first.</p>
+      <p>Every flight, airport and lounge I've reviewed, newest first.</p>
     </header>
 
     {
@@ -47,19 +47,28 @@ const used = (Object.keys(CATEGORIES) as Category[]).filter((c) => reviews.some(
   const items = document.querySelectorAll<HTMLElement>('.list [data-category]');
   const status = document.querySelector<HTMLElement>('.status');
 
+  function show(filter: string, announce = true) {
+    let shown = 0;
+    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
+    items.forEach((item) => {
+      const match = filter === 'all' || item.dataset.category === filter;
+      item.hidden = !match;
+      if (match) shown++;
+    });
+    if (announce && status) status.textContent = `Showing ${shown} ${shown === 1 ? 'review' : 'reviews'}`;
+  }
+
   buttons.forEach((button) => {
     button.addEventListener('click', () => {
-      const filter = button.dataset.filter;
-      let shown = 0;
-      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
-      items.forEach((item) => {
-        const match = filter === 'all' || item.dataset.category === filter;
-        item.hidden = !match;
-        if (match) shown++;
-      });
-      if (status) status.textContent = `Showing ${shown} ${shown === 1 ? 'review' : 'reviews'}`;
+      const filter = button.dataset.filter ?? 'all';
+      show(filter);
+      history.replaceState(null, '', filter === 'all' ? location.pathname : `#${filter}`);
     });
   });
+
+  // Links like /reviews/#flight open with that filter already chosen.
+  const fromHash = location.hash.slice(1);
+  if (fromHash && [...buttons].some((b) => b.dataset.filter === fromHash)) show(fromHash, false);
 </script>
 
 <style>

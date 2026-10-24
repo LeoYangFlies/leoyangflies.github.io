@@ -6,7 +6,7 @@ import type { ImageMetadata } from 'astro';
 interface Props {
   image?: ImageMetadata;
   alt?: string;
-  place: string;
+  label: string;
   widths?: number[];
   sizes?: string;
   ratio?: string;
@@ -17,7 +17,7 @@ interface Props {
 const {
   image,
   alt = '',
-  place,
+  label,
   widths = [480, 800, 1200, 1600],
   sizes = '100vw',
   ratio = '3 / 2',
@@ -25,9 +25,12 @@ const {
   class: className,
 } = Astro.props;
 
-// Pick one of a few paper tints from the place name, so stand-ins vary but stay stable.
+// Pick one of a few paper tints from the label, so stand-ins vary but stay stable.
 const tints = ['tint-a', 'tint-b', 'tint-c'];
-const tint = tints[[...place].reduce((sum, c) => sum + c.charCodeAt(0), 0) % tints.length];
+const tint = tints[[...label].reduce((sum, c) => sum + c.charCodeAt(0), 0) % tints.length];
+// Size the stand-in text by its longest word, so names fit without breaking mid-word.
+const longestWord = Math.max(...label.split(/\s+/).map((w) => w.length), 1);
+const textSize = `min(${Math.min(19, 128 / longestWord).toFixed(1)}cqi, 5.5rem)`;
 ---
 
 <div class:list={['cover', className, !image && tint]} style={`aspect-ratio: ${ratio}`}>
@@ -35,8 +38,8 @@ const tint = tints[[...place].reduce((sum, c) => sum + c.charCodeAt(0), 0) % tin
     image ? (
       <Image src={image} alt={alt} widths={widths} sizes={sizes} loading={loading} />
     ) : (
-      <span class="stand-in" aria-hidden="true">
-        {place}
+      <span class="stand-in" aria-hidden="true" style={`font-size: ${textSize}`}>
+        {label}
       </span>
     )
   }
@@ -67,7 +70,7 @@ const tint = tints[[...place].reduce((sum, c) => sum + c.charCodeAt(0), 0) % tin
     /* scale with the box so the whole name fits, small thumbnail or wide banner */
     font-size: min(19cqi, 5.5rem);
     line-height: 0.95;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     color: color-mix(in srgb, var(--ink) 22%, transparent);
     overflow: hidden;
   }
