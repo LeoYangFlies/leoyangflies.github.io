@@ -34,7 +34,6 @@ const byYear = s.years.map((y) => ({
   year: y.name,
   flights: flights.filter((f) => String(f.date.getUTCFullYear()) === y.name),
 }));
-const labelCodes = s.topAirports.slice(0, 12).map((a) => a.name);
 
 // Flights per year as columns, including any years with no flights.
 const yearCounts = new Map(s.years.map((y) => [Number(y.name), y.count]));
@@ -72,7 +71,7 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
     {
       s.count > 0 && (
         <div class="overview">
-        <RouteMap routes={s.routes} airports={s.airports} labelCodes={labelCodes} animate interactive class="map" />
+        <RouteMap routes={s.routes} airports={s.airports} animate interactive class="map" />
         <dl class="facts">
           {s.minutes > 0 && (
             <div>

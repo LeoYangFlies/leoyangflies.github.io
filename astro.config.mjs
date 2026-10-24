@@ -14,4 +14,8 @@ const site =
 export default defineConfig({
   site,
   integrations: [sitemap()],
+  vite: {
+    // The detailed world coastline (only loaded when someone zooms in close) is a large file by design.
+    build: { chunkSizeWarningLimit: 700 },
+  },
 });
