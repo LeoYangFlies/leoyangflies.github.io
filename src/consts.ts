@@ -16,8 +16,8 @@ export const SOCIAL = {
 export const CATEGORIES = {
   trip: 'Trip reports',
   flight: 'Flights',
-  airport: 'Airports',
   lounge: 'Lounges',
+  hotel: 'Hotels',
 } as const;
 
 export type Category = keyof typeof CATEGORIES;

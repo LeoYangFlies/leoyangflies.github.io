@@ -32,7 +32,7 @@ export function categoryLabel(category: Category): string {
 
 /** Singular form for use in a sentence: "Flight review", "Lounge review". */
 export function reviewKind(category: Category): string {
-  return { trip: 'Trip', flight: 'Flight', airport: 'Airport', lounge: 'Lounge' }[category];
+  return { trip: 'Trip', flight: 'Flight', lounge: 'Lounge', hotel: 'Hotel' }[category];
 }
 
 export function formatDate(date: Date): string {

@@ -35,9 +35,13 @@ const reviews = defineCollection({
         seat: z.string().optional(),
         duration: z.string().optional(), // e.g. "14h 35m"
 
-        // Airports and lounges
-        place: z.string().optional(), // e.g. "Shanghai Pudong (PVG)"
+        // Lounges and hotels
+        place: z.string().optional(), // e.g. "Hong Kong (HKG)" for a lounge, "Niseko" for a hotel
         country: z.string().optional(),
+
+        // Hotels: the room, and how many nights (the check-in date goes in `date`)
+        room: z.string().optional(), // e.g. "Park King, mountain view"
+        nights: z.number().int().positive().optional(),
 
         // Trip reports: every Logbook flight from start to end (inclusive) becomes the itinerary.
         start: z.coerce.date().optional(),
@@ -60,8 +64,8 @@ const reviews = defineCollection({
         if (data.category === 'flight' && (!data.from || !data.to || !data.airline)) {
           ctx.addIssue({ code: 'custom', message: 'Flight reviews need airline, from and to.' });
         }
-        if ((data.category === 'airport' || data.category === 'lounge') && (!data.place || !data.country)) {
-          ctx.addIssue({ code: 'custom', message: 'Airport and lounge reviews need place and country.' });
+        if ((data.category === 'lounge' || data.category === 'hotel') && (!data.place || !data.country)) {
+          ctx.addIssue({ code: 'custom', message: 'Lounge and hotel reviews need place and country.' });
         }
         if (data.category === 'trip' && (!data.start || !data.end)) {
           ctx.addIssue({ code: 'custom', message: 'Trip reports need start and end dates.' });

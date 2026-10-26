@@ -9,11 +9,11 @@ const reviews = await getReviews();
 const used = (Object.keys(CATEGORIES) as Category[]).filter((c) => reviews.some((r) => r.data.category === c));
 ---
 
-<Base title="Reviews" description="Trip reports, and reviews of flights, airports and lounges, newest first.">
+<Base title="Reviews" description="Trip reports, and reviews of flights, lounges and hotels, newest first.">
   <div class="wrap">
     <header class="page-head">
       <h1>Reviews</h1>
-      <p>Trip reports, and reviews of flights, airports and lounges, newest first.</p>
+      <p>Trip reports, and reviews of flights, lounges and hotels, newest first.</p>
     </header>
 
     {

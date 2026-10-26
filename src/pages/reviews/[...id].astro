@@ -86,10 +86,21 @@ const facts: { label: string; value: string }[] = isTrip
         { label: 'Distance', value: `${Math.round(distanceKm(data.from!, data.to!)).toLocaleString('en-US')} km` },
         ...(data.date ? [{ label: 'Flown', value: formatDate(data.date) }] : data.when ? [{ label: 'Flown', value: data.when }] : []),
       ]
-    : [
-        { label: 'Where', value: whereLong(review) },
-        ...(data.when ? [{ label: 'Visited', value: data.when }] : []),
-      ];
+    : data.category === 'hotel'
+      ? [
+          { label: 'Where', value: whereLong(review) },
+          ...(data.room ? [{ label: 'Room', value: data.room }] : []),
+          ...(data.date
+            ? [{ label: 'Checked in', value: formatDate(data.date) }]
+            : data.when
+              ? [{ label: 'Stayed', value: data.when }]
+              : []),
+          ...(data.nights ? [{ label: 'Nights', value: String(data.nights) }] : []),
+        ]
+      : [
+          { label: 'Where', value: whereLong(review) },
+          ...(data.when ? [{ label: 'Visited', value: data.when }] : []),
+        ];
 ---
 
 <Base title={data.title} description={data.description} image={ogImage} type="article">

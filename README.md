@@ -75,7 +75,7 @@ A flight review starts like this:
 title: 'Fifteen hours in economy, Shanghai to New York'
 description: 'One sentence shown in lists and link previews.'
 published: 2026-09-02
-category: flight          # trip, flight, airport or lounge
+category: flight          # trip, flight, lounge or hotel
 airline: China Eastern
 flight: MU587
 from: PVG
@@ -100,12 +100,23 @@ The review goes here. Use ## for headings, **bold**, - for bullet lists,
 > for a pull quote, and ![description](./images/photo.jpg) for extra photos.
 ```
 
-Airport and lounge reviews use `place` and `country` instead of the flight fields:
+Lounge and hotel reviews use `place` and `country` instead of the flight fields:
 
 ```yaml
 category: lounge
-place: New York JFK
-country: USA
+place: Hong Kong (HKG)
+country: Hong Kong
+```
+
+Hotels can also have a room, a check-in date and the number of nights:
+
+```yaml
+category: hotel
+place: Niseko
+country: Japan
+room: 'Park King, mountain view'
+date: 2024-02-09      # check-in date
+nights: 3
 ```
 
 Photos go in `src/content/reviews/images/`. Use JPGs straight from your phone; the site resizes and converts them automatically. Blur the barcode and booking code on any boarding pass before uploading.
