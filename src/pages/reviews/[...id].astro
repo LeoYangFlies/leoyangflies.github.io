@@ -448,6 +448,16 @@ const facts: { label: string; value: string }[] = isTrip
     align-items: start;
   }
 
+  /* On phones and narrow windows, the summary comes first, right under the cover photo. */
+  @media (max-width: 59.99rem) {
+    .layout {
+      gap: 2.5rem;
+    }
+    .verdict {
+      order: -1;
+    }
+  }
+
   @media (min-width: 60rem) {
     .layout {
       grid-template-columns: minmax(0, 1fr) 20rem;
