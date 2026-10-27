@@ -22,7 +22,7 @@ const mapLegs: MapLeg[] = routeLegs(flights).map((r) => {
     twoWay: r.twoWay,
     weight: r.weight,
     title: `${a.city} ${r.from} ${r.twoWay ? '–' : '→'} ${b.city} ${r.to}`,
-    lines: [`Flown ${r.weight} ${r.weight === 1 ? 'time' : 'times'}`, `${fmt(km)} km per flight`],
+    lines: [`Flown ${r.weight} ${r.weight === 1 ? 'time' : 'times'}`, `${fmt(km)} km`],
     rows: r.flights.map((f) => {
       const reviewed = links.reviewFor(f);
       return {

@@ -345,6 +345,10 @@ const mapData = interactive
   import { ARROW_PATH, arrowMarks, labelsThatFit } from '../lib/globe';
 
   const NS = 'http://www.w3.org/2000/svg';
+  // Airlines whose logo is wrong or outdated on the main logo service get theirs from elsewhere.
+  const LOGO_OVERRIDES: Record<string, string> = {
+    NH: 'https://images.kiwi.com/airlines/64/NH.png',
+  };
   const MAX_ZOOM = 60;
   const DETAIL_ZOOM = 4; // switch to the detailed coastline from here
   type LonLat = [number, number];
@@ -547,7 +551,7 @@ const mapData = interactive
       img.loading = 'lazy';
       img.decoding = 'async';
       img.referrerPolicy = 'no-referrer';
-      img.src = `https://pics.avs.io/al_square/40/40/${row.code}@2x.png`;
+      img.src = LOGO_OVERRIDES[row.code] ?? `https://pics.avs.io/al_square/40/40/${row.code}@2x.png`;
       img.onerror = badge;
       box.appendChild(img);
       return box;
@@ -848,6 +852,15 @@ const mapData = interactive
       }
     });
 
+    // The draw-in plays once when the page opens. Afterwards (or as soon as someone
+    // interacts), switch it off so routes moved to the front don't replay it.
+    const endIntro = () => figure.classList.remove('animate');
+    if (figure.classList.contains('animate')) {
+      setTimeout(endIntro, 3500);
+      svg.addEventListener('pointerdown', endIntro, { once: true });
+      svg.addEventListener('focusin', endIntro, { once: true });
+    }
+
     figure.classList.add('ready');
     draw();
   });
@@ -973,7 +986,6 @@ const mapData = interactive
     fill: none;
     stroke: var(--red);
     stroke-linecap: round;
-    transition: opacity 0.15s ease;
   }
 
   .arcs.many .arc {
@@ -985,9 +997,6 @@ const mapData = interactive
     stroke: var(--surface);
     stroke-width: 1.2;
     stroke-linejoin: round;
-    transition:
-      fill-opacity 0.15s ease,
-      stroke-opacity 0.15s ease;
   }
 
   .hit {
