@@ -1167,8 +1167,13 @@ const mapData = interactive
 
   /* With a table, the short lines become one row of figures under the title. */
   .leg-info.has-table {
-    width: min(21rem, calc(100% - 0.5rem));
+    width: min(23rem, calc(100% - 0.5rem));
     max-width: none;
+    padding-right: 0.9rem;
+  }
+
+  .has-table .info-title {
+    padding-right: 2rem; /* room for the close button */
   }
 
   .has-table .info-lines {
@@ -1176,45 +1181,52 @@ const mapData = interactive
     flex-wrap: wrap;
     gap: 0.1rem 1.1rem;
     padding-bottom: 0.55rem;
-    border-bottom: 1px solid var(--rule);
     color: var(--ink);
     font-weight: 600;
   }
 
+  /* Scrolls up and down only; the column headers stay put and fully cover the rows beneath. */
   .info-table {
     max-height: 13.5rem;
+    overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
-    margin-right: -1.6rem;
-    padding-right: 1.6rem;
+    border-top: 1px solid var(--rule);
   }
 
   .info-table :global(table) {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-variant-numeric: tabular-nums;
   }
 
-  .info-table :global(th) {
+  .info-table :global(thead th) {
     position: sticky;
     top: 0;
+    z-index: 1;
     background: var(--surface);
+    box-shadow: 0 1px 0 var(--rule);
     text-align: left;
     font-weight: 500;
     font-size: 0.72rem;
     color: var(--muted);
-    padding: 0.45rem 0.5rem 0.3rem 0;
+    padding: 0.4rem 0.45rem 0.3rem 0;
   }
 
   .info-table :global(th.c-logo) {
-    width: 1.75rem;
+    width: 1.6rem;
   }
 
   .info-table :global(td) {
-    padding: 0.32rem 0.5rem 0.32rem 0;
-    border-top: 1px solid var(--rule);
+    padding: 0.32rem 0.45rem 0.32rem 0;
+    border-bottom: 1px solid var(--rule);
     white-space: nowrap;
     vertical-align: middle;
+  }
+
+  .info-table :global(tbody tr:last-child td) {
+    border-bottom: 0;
   }
 
   .info-table :global(.c-cabin) {
