@@ -345,9 +345,22 @@ const mapData = interactive
   import { ARROW_PATH, arrowMarks, labelsThatFit } from '../lib/globe';
 
   const NS = 'http://www.w3.org/2000/svg';
-  // Airlines whose logo is wrong or outdated on the main logo service get theirs from elsewhere.
+  // Logo files saved in src/assets/logos (named by airline code, e.g. KA.png) win over everything.
+  const LOCAL_LOGOS: Record<string, string> = Object.fromEntries(
+    Object.entries(
+      import.meta.glob<string>('../assets/logos/*.{png,jpg,jpeg,webp,svg}', {
+        eager: true,
+        query: '?url',
+        import: 'default',
+      }),
+    ).map(([path, url]) => [path.split('/').pop()!.split('.')[0].toUpperCase(), url]),
+  );
+  // Airlines whose logo is wrong, cropped or outdated on the main logo service get theirs from elsewhere.
+  const KIWI = (code: string) => `https://images.kiwi.com/airlines/64/${code}.png`;
   const LOGO_OVERRIDES: Record<string, string> = {
-    NH: 'https://images.kiwi.com/airlines/64/NH.png',
+    NH: KIWI('NH'), // ANA
+    MU: KIWI('MU'), // China Eastern: the square crop cut off part of the logo
+    KA: KIWI('KA'), // Cathay Dragon: the code now points at a different logo
   };
   const MAX_ZOOM = 60;
   const DETAIL_ZOOM = 4; // switch to the detailed coastline from here
@@ -551,7 +564,8 @@ const mapData = interactive
       img.loading = 'lazy';
       img.decoding = 'async';
       img.referrerPolicy = 'no-referrer';
-      img.src = LOGO_OVERRIDES[row.code] ?? `https://pics.avs.io/al_square/40/40/${row.code}@2x.png`;
+      img.src =
+        LOCAL_LOGOS[row.code] ?? LOGO_OVERRIDES[row.code] ?? `https://pics.avs.io/al_square/40/40/${row.code}@2x.png`;
       img.onerror = badge;
       box.appendChild(img);
       return box;
