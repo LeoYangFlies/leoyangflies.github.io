@@ -739,6 +739,13 @@ const mapData = interactive
       drag = p ? { x: p.x, y: p.y, rotate: projection.rotate() } : null;
     };
 
+    const clearPressing = () => els.legs.forEach((g) => g.classList.remove('pressing'));
+    // Only a real drag (the pointer moved) or a pinch switches off the route highlights.
+    const startDragging = () => {
+      clearPressing();
+      figure.classList.add('dragging');
+    };
+
     svg.addEventListener('pointerdown', (e) => {
       // Stops the browser from focusing the globe (a frame) or selecting text (a blue wash).
       e.preventDefault();
@@ -746,6 +753,8 @@ const mapData = interactive
       const legEl = (e.target as Element).closest<SVGGElement>('.leg');
       if (pointers.size === 0) {
         press = { x: e.clientX, y: e.clientY, leg: legEl ? Number(legEl.dataset.leg) : null, moved: false, multi: false };
+        // Keep the route lit while it's being pressed (pointer capture ends its :hover).
+        legEl?.classList.add('pressing');
       } else if (press) {
         press.multi = true;
       }
@@ -755,13 +764,16 @@ const mapData = interactive
       if (pointers.size === 2) {
         drag = null;
         pinch = { dist: distance(), zoom };
+        startDragging();
       }
-      figure.classList.add('dragging');
     });
     svg.addEventListener('pointermove', (e) => {
       if (!pointers.has(e.pointerId)) return;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (press && !press.moved && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 5) press.moved = true;
+      if (press && !press.moved && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 5) {
+        press.moved = true;
+        startDragging();
+      }
       if (!press?.moved && !pinch) return;
       if (pinch && pointers.size >= 2) {
         set(null, pinch.zoom * (distance() / pinch.dist));
@@ -779,6 +791,7 @@ const mapData = interactive
       if (pointers.size === 0) {
         drag = null;
         figure.classList.remove('dragging');
+        clearPressing();
         // A tap or click that didn't move: open (or close) a route's details.
         if (press && !press.moved && !press.multi && e.type === 'pointerup') {
           if (press.leg === null || press.leg === selected) closeInfo();
@@ -1009,6 +1022,7 @@ const mapData = interactive
 
   /* Hovering or choosing a route makes it glow, and fades the others back. */
   .interactive:not(.dragging) .leg:hover .arc,
+  .interactive .leg.pressing .arc,
   .interactive .leg:has(.hit:focus-visible) .arc,
   .leg.selected .arc {
     stroke-opacity: 1;
@@ -1016,12 +1030,14 @@ const mapData = interactive
   }
 
   .interactive:not(.dragging) .arcs:has(.leg:hover) .leg:not(:hover) .arc,
+  .interactive .arcs:has(.leg.pressing) .leg:not(.pressing) .arc,
   .interactive .arcs:has(.hit:focus-visible) .leg:not(:has(.hit:focus-visible)) .arc,
   .has-selection .leg:not(.selected) .arc {
     opacity: 0.2;
   }
 
   .interactive:not(.dragging) .arcs:has(.leg:hover) .leg:not(:hover) :global(.arrow),
+  .interactive .arcs:has(.leg.pressing) .leg:not(.pressing) :global(.arrow),
   .interactive .arcs:has(.hit:focus-visible) .leg:not(:has(.hit:focus-visible)) :global(.arrow),
   .has-selection .leg:not(.selected) :global(.arrow) {
     fill-opacity: 0.2;
