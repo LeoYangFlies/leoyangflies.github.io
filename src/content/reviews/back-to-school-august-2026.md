@@ -26,9 +26,10 @@ After a bit of fare searching, I booked this itinerary on Cathay Pacific’s web
 
 This one-way ticket cost $1,964, which I’d consider poor value for a one-way transpacific premium economy fare, but it was the best I could find within oneworld just a month before departure.
 
-My Philippine Airlines ticket home for Thanksgiving also leaves from Toronto, so I booked a separate Air Canada ticket covering both of those connections: this flight from Toronto to Newark in business class, and a short economy flight from New York LaGuardia to Toronto ahead of my Thanksgiving trip.
+My Philippine Airlines ticket home for Thanksgiving also leaves from Toronto, so I booked a separate Air Canada ticket covering both of those connections:
 
 - **August 22:** AC 1502, Toronto to Newark, business class, Airbus A320, 08:20–10:00
+- **Thanksgiving:** a flight from New York back to Toronto, economy
 
 That ticket cost $595. I don’t really need business class on a short transborder hop like this, but when I booked, economy was barely cheaper than business on this leg, so I treated myself to a cheap upgrade.
 
