@@ -9,27 +9,32 @@ import { getReviews, flightLinks, reviewUrl } from '../lib/reviews';
 const flights = getFlights();
 const links = flightLinks(await getReviews());
 
-// The globe: one line per route, with a short summary to show when it's clicked.
-const monthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+// The globe: one line per route. Clicking it shows a small table of every flight on it.
+const CABIN_CODES: Record<string, string> = { First: 'F', Business: 'J', 'Premium Economy': 'PE', Economy: 'Y' };
+const rowDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const mapLegs: MapLeg[] = routeLegs(flights).map((r) => {
   const a = getAirport(r.from);
   const b = getAirport(r.to);
-  const airlines = [...new Set(r.flights.map((f) => f.airline))];
-  const airlineText =
-    airlines.length <= 3 ? airlines.join(', ') : `${airlines.slice(0, 3).join(', ')} and ${airlines.length - 3} more`;
-  const reviewed = r.flights.map((f) => links.reviewFor(f)).find(Boolean);
+  const km = Math.round(r.flights[0].km);
   return {
     from: r.from,
     to: r.to,
     twoWay: r.twoWay,
     weight: r.weight,
-    title: `${a.city} ${r.from} ${r.twoWay ? 'and' : 'to'} ${b.city} ${r.to}`,
-    lines: [
-      `${r.weight} ${r.weight === 1 ? 'flight' : 'flights'}${r.twoWay ? ', both directions' : ''}`,
-      airlineText,
-      `Last flown ${monthYear(r.flights[0].date)}`,
-    ],
-    link: reviewed ? { href: reviewUrl(reviewed), label: 'Read the review' } : undefined,
+    title: `${a.city} ${r.from} ${r.twoWay ? '–' : '→'} ${b.city} ${r.to}`,
+    lines: [`Flown ${r.weight} ${r.weight === 1 ? 'time' : 'times'}`, `${fmt(km)} km per flight`],
+    rows: r.flights.map((f) => {
+      const reviewed = links.reviewFor(f);
+      return {
+        code: (f.flight ?? '').split(' ')[0].toUpperCase(),
+        airline: f.airline,
+        date: rowDate(f.date),
+        flight: f.flight ?? f.airline,
+        cabin: f.cabin ? CABIN_CODES[f.cabin] : undefined,
+        to: r.twoWay ? f.to : undefined,
+        href: reviewed ? reviewUrl(reviewed) : undefined,
+      };
+    }),
   };
 });
 const s = getStats(flights);
@@ -98,7 +103,7 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
     {
       s.count > 0 && (
         <div class="overview">
-        <RouteMap legs={mapLegs} airports={s.airports} animate interactive class="map" />
+        <RouteMap legs={mapLegs} airports={s.airports} arrows={false} animate interactive class="map" />
         <dl class="facts">
           {s.minutes > 0 && (
             <div>
@@ -314,7 +319,7 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
 
   .overview :global(.map) {
     width: 100%;
-    max-width: 36rem;
+    max-width: 46rem;
     justify-self: center;
   }
 
@@ -327,7 +332,7 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
 
   @media (min-width: 56rem) {
     .overview {
-      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     }
     .facts {
       flex-direction: column;

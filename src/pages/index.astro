@@ -101,7 +101,7 @@ const stamp = latest ? postmarkText(latest) : undefined;
           </div>
           <div class="logbook-body">
             <a class="logbook-map" href="/logbook/" tabindex="-1" aria-hidden="true">
-              <RouteMap legs={routeLegs()} airports={stats.airports} labels={false} />
+              <RouteMap legs={routeLegs()} airports={stats.airports} labels={false} arrows={false} />
             </a>
             <p class="logbook-totals">
               {fmt(stats.count)} {stats.count === 1 ? 'flight' : 'flights'}, {fmt(stats.km)} km, and{' '}

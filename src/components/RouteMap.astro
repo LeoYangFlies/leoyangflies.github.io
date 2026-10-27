@@ -19,7 +19,23 @@ export interface MapLeg {
   /** What the info card shows when the route is clicked. */
   title?: string;
   lines?: string[];
+  /** One row per flight on this route, shown as a small table in the card. */
+  rows?: MapLegRow[];
   link?: { href: string; label: string };
+}
+
+export interface MapLegRow {
+  /** Two-letter airline code, used for the logo. */
+  code: string;
+  airline: string;
+  date: string;
+  flight: string;
+  /** F, J, PE or Y. */
+  cabin?: string;
+  /** Destination code, shown on routes flown both ways. */
+  to?: string;
+  /** Link to the review of this flight, if there is one. */
+  href?: string;
 }
 
 interface Props {
@@ -40,6 +56,8 @@ interface Props {
   centerOn?: 'weighted' | 'spread';
   /** Give short routes a smaller arrow instead of none (for trips, where every flight counts). */
   shrinkArrows?: boolean;
+  /** Draw direction arrows on the routes. */
+  arrows?: boolean;
   class?: string;
 }
 
@@ -53,6 +71,7 @@ const {
   arrowMinLength,
   centerOn = 'weighted',
   shrinkArrows = false,
+  arrows: showArrows = true,
   class: className,
 } = Astro.props;
 
@@ -149,7 +168,7 @@ const arcs = ordered.map(({ leg }, i) => {
     width: +((many ? 1 : 1.6) + 2.6 * Math.sqrt((leg.weight ?? 1) / max)).toFixed(2),
     // Spread the draw-in over about 1.4 seconds however many routes there are.
     delay: (0.15 + (i / Math.max(1, ordered.length)) * 1.4).toFixed(2),
-    arrows: arrowMarks((p) => projection(p), center, a, b, !!leg.twoWay, ARROW_MIN_LENGTH, shrinkArrows),
+    arrows: showArrows ? arrowMarks((p) => projection(p), center, a, b, !!leg.twoWay, ARROW_MIN_LENGTH, shrinkArrows) : [],
     label: leg.title ?? `${leg.from} to ${leg.to}`,
   };
 });
@@ -185,12 +204,14 @@ const mapData = interactive
       markScale,
       arrowMin: ARROW_MIN_LENGTH,
       shrinkArrows,
+      showArrows,
       legs: arcs.map((arc) => ({
         a: arc.a,
         b: arc.b,
         twoWay: !!arc.leg.twoWay,
         title: arc.leg.title ?? '',
         lines: arc.leg.lines ?? [],
+        rows: arc.leg.rows ?? [],
         link: arc.leg.link ?? null,
       })),
       airports: points,
@@ -303,6 +324,7 @@ const mapData = interactive
             </button>
             <p class="info-title" />
             <ul class="info-lines" />
+            <div class="info-table" hidden />
             <a class="info-link" hidden />
           </div>
         </>
@@ -333,7 +355,17 @@ const mapData = interactive
     twoWay: boolean;
     title: string;
     lines: string[];
+    rows: Row[];
     link: { href: string; label: string } | null;
+  };
+  type Row = {
+    code: string;
+    airline: string;
+    date: string;
+    flight: string;
+    cabin?: string;
+    to?: string;
+    href?: string;
   };
   type MapData = {
     size: number;
@@ -343,6 +375,7 @@ const mapData = interactive
     markScale: number;
     arrowMin: number;
     shrinkArrows: boolean;
+    showArrows: boolean;
     legs: Leg[];
     airports: Pt[];
     labels: boolean;
@@ -379,6 +412,7 @@ const mapData = interactive
       box: figure.querySelector<HTMLElement>('.leg-info')!,
       title: figure.querySelector<HTMLElement>('.info-title')!,
       lines: figure.querySelector<HTMLElement>('.info-lines')!,
+      table: figure.querySelector<HTMLElement>('.info-table')!,
       link: figure.querySelector<HTMLAnchorElement>('.info-link')!,
       close: figure.querySelector<HTMLButtonElement>('.info-close')!,
     };
@@ -435,7 +469,7 @@ const mapData = interactive
         const d = path({ type: 'LineString', coordinates: [leg.a, leg.b] }) ?? '';
         g.querySelector('.arc')!.setAttribute('d', d);
         g.querySelector('.hit')?.setAttribute('d', d);
-        const marks = arrowMarks(
+        const marks = !data.showArrows ? [] : arrowMarks(
           (p) => projection(p) as [number, number] | null,
           center,
           leg.a,
@@ -493,6 +527,83 @@ const mapData = interactive
 
     // ---------- Route details ----------
 
+    /** Airline logo from a public logo service, falling back to the two-letter code. */
+    function logo(row: Row): HTMLElement {
+      const box = document.createElement('span');
+      box.className = 'logo';
+      box.title = row.airline;
+      const badge = () => {
+        box.replaceChildren(row.code);
+        box.classList.add('code');
+      };
+      if (!/^[A-Z0-9]{2}$/.test(row.code)) {
+        badge();
+        return box;
+      }
+      const img = document.createElement('img');
+      img.alt = row.airline;
+      img.width = 20;
+      img.height = 20;
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.referrerPolicy = 'no-referrer';
+      img.src = `https://pics.avs.io/al_square/40/40/${row.code}@2x.png`;
+      img.onerror = badge;
+      box.appendChild(img);
+      return box;
+    }
+
+    function buildTable(rows: Row[]): HTMLTableElement {
+      const table = document.createElement('table');
+      const head = table.createTHead().insertRow();
+      for (const [label, cls] of [
+        ['Airline', 'c-logo'],
+        ['Date', 'c-date'],
+        ['Flight', 'c-flight'],
+        ...(rows.some((r) => r.to) ? [['To', 'c-to']] : []),
+        ['Class', 'c-cabin'],
+      ]) {
+        const th = document.createElement('th');
+        th.scope = 'col';
+        th.className = cls;
+        th.textContent = label;
+        head.appendChild(th);
+      }
+      const body = table.createTBody();
+      for (const r of rows) {
+        const tr = body.insertRow();
+        tr.insertCell().appendChild(logo(r));
+        const date = tr.insertCell();
+        date.className = 'c-date';
+        date.textContent = r.date;
+        const flight = tr.insertCell();
+        flight.className = 'c-flight';
+        if (r.href) {
+          const a = document.createElement('a');
+          a.href = r.href;
+          a.textContent = r.flight;
+          a.title = 'Read the review';
+          flight.appendChild(a);
+        } else {
+          flight.textContent = r.flight;
+        }
+        if (rows.some((x) => x.to)) {
+          const to = tr.insertCell();
+          to.className = 'c-to';
+          to.textContent = r.to ? `→ ${r.to}` : '';
+        }
+        const cabin = tr.insertCell();
+        cabin.className = 'c-cabin';
+        if (r.cabin) {
+          const tag = document.createElement('span');
+          tag.className = `cabin cabin-${r.cabin.toLowerCase()}`;
+          tag.textContent = r.cabin;
+          cabin.appendChild(tag);
+        }
+      }
+      return table;
+    }
+
     function closeInfo() {
       if (selected === null) return;
       selected = null;
@@ -522,6 +633,10 @@ const mapData = interactive
           return li;
         }),
       );
+      info.box.classList.toggle('has-table', leg.rows.length > 0);
+      info.table.hidden = leg.rows.length === 0;
+      info.table.replaceChildren(...(leg.rows.length ? [buildTable(leg.rows)] : []));
+      info.table.scrollTop = 0;
       info.link.hidden = !leg.link;
       if (leg.link) {
         info.link.href = leg.link.href;
@@ -535,7 +650,7 @@ const mapData = interactive
       const x = clientX - s.left;
       const y = clientY - s.top;
       const left = clamp(x - w / 2, 4, s.width - w - 4);
-      const top = y - h - 14 >= 4 ? y - h - 14 : Math.min(y + 14, s.height - h - 4);
+      const top = y - h - 14 >= 4 ? y - h - 14 : Math.max(4, Math.min(y + 14, s.height - h - 4));
       info.box.style.left = `${left}px`;
       info.box.style.top = `${top}px`;
     }
@@ -971,6 +1086,127 @@ const mapData = interactive
     display: inline-block;
     margin-top: 0.45rem;
     font-weight: 600;
+  }
+
+  /* [hidden] must win over the display rules above. */
+  .info-link[hidden],
+  .info-table[hidden] {
+    display: none;
+  }
+
+  /* With a table, the short lines become one row of figures under the title. */
+  .leg-info.has-table {
+    width: min(21rem, calc(100% - 0.5rem));
+    max-width: none;
+  }
+
+  .has-table .info-lines {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.1rem 1.1rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .info-table {
+    max-height: 13.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin-right: -1.6rem;
+    padding-right: 1.6rem;
+  }
+
+  .info-table :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .info-table :global(th) {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.72rem;
+    color: var(--muted);
+    padding: 0.45rem 0.5rem 0.3rem 0;
+  }
+
+  .info-table :global(th.c-logo) {
+    width: 1.75rem;
+  }
+
+  .info-table :global(td) {
+    padding: 0.32rem 0.5rem 0.32rem 0;
+    border-top: 1px solid var(--rule);
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .info-table :global(.c-cabin) {
+    text-align: right;
+    padding-right: 0;
+  }
+
+  .info-table :global(td.c-flight) {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .info-table :global(.c-to) {
+    color: var(--muted);
+  }
+
+  .info-table :global(.logo) {
+    display: grid;
+    place-items: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px var(--rule);
+  }
+
+  .info-table :global(.logo img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .info-table :global(.logo.code) {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--paper-deep);
+  }
+
+  .info-table :global(.cabin) {
+    display: inline-block;
+    min-width: 1.6rem;
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--rule);
+    color: var(--text);
+  }
+
+  .info-table :global(.cabin-f),
+  .info-table :global(.cabin-j) {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--surface);
+  }
+
+  .info-table :global(.cabin-pe) {
+    border-color: var(--blue);
+    color: var(--blue);
   }
 
   .info-close {
