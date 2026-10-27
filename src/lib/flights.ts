@@ -153,3 +153,29 @@ export function getStats(flights = getFlights()) {
 }
 
 export const fmt = (n: number) => n.toLocaleString('en-US');
+
+export interface RouteLeg {
+  from: string;
+  to: string;
+  twoWay: boolean;
+  weight: number;
+  /** The flights on this route, newest first. */
+  flights: Flight[];
+}
+
+/** One entry per route for the globe: both directions together, noting which way it was flown. */
+export function routeLegs(flights = getFlights()): RouteLeg[] {
+  const groups = new Map<string, { dirs: Set<string>; flights: Flight[] }>();
+  for (const f of flights) {
+    const key = [f.from, f.to].sort().join('-');
+    const g = groups.get(key) ?? { dirs: new Set<string>(), flights: [] };
+    g.dirs.add(`${f.from}-${f.to}`);
+    g.flights.push(f);
+    groups.set(key, g);
+  }
+  return [...groups.entries()].map(([key, g]) => {
+    const twoWay = g.dirs.size > 1;
+    const [from, to] = (twoWay ? key : [...g.dirs][0]).split('-');
+    return { from, to, twoWay, weight: g.flights.length, flights: g.flights };
+  });
+}

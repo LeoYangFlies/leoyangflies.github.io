@@ -7,7 +7,8 @@ import Postmark from '../../components/Postmark.astro';
 import ReviewItem from '../../components/ReviewItem.astro';
 import RouteMap from '../../components/RouteMap.astro';
 import { getAirport, distanceKm } from '../../data/airports';
-import { fmt, formatMinutes, type Route } from '../../lib/flights';
+import { fmt, formatMinutes } from '../../lib/flights';
+import type { MapLeg } from '../../components/RouteMap.astro';
 import {
   getReviews,
   categoryLabel,
@@ -52,13 +53,21 @@ const stamp = postmarkText(review);
 const legs = isTrip ? tripFlights(review) : [];
 const links = flightLinks(all);
 const tripReviews = isTrip ? reviewsInTrip(review, all) : [];
-const tripRoutes: Route[] = [];
-for (const f of legs) {
-  const [a, b] = [f.from, f.to].sort();
-  const r = tripRoutes.find((x) => x.a === a && x.b === b);
-  if (r) r.count++;
-  else tripRoutes.push({ a, b, count: 1 });
-}
+// The trip's globe: one line per flight, with its number, date and cabin when clicked.
+// (Aircraft and flight time are in the itinerary table right below, so they're left out.)
+const tripMapLegs: MapLeg[] = legs.map((f) => {
+  const reviewed = links.reviewFor(f);
+  return {
+    from: f.from,
+    to: f.to,
+    title: `${getAirport(f.from).city} to ${getAirport(f.to).city}`,
+    lines: [
+      [f.airline, f.flight].filter(Boolean).join(' '),
+      [formatDate(f.date), f.cabin && `${f.cabin.toLowerCase()} class`].filter(Boolean).join(', '),
+    ],
+    link: reviewed ? { href: reviewUrl(reviewed), label: 'Read the review' } : undefined,
+  };
+});
 const tripKm = legs.reduce((sum, f) => sum + f.km, 0);
 const tripMinutes = legs.reduce((sum, f) => sum + (f.minutes ?? 0), 0);
 const shortDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -153,7 +162,16 @@ const facts: { label: string; value: string }[] = isTrip
         <section class="itinerary" aria-labelledby="itinerary-h">
           <h2 id="itinerary-h">Itinerary</h2>
           <div class="itinerary-body">
-            <RouteMap routes={tripRoutes} airports={[...new Set(legs.flatMap((f) => [f.from, f.to]))]} class="trip-map" />
+            <RouteMap
+              legs={tripMapLegs}
+              airports={[...new Set(legs.flatMap((f) => [f.from, f.to]))]}
+              interactive
+              markScale={1.7}
+              arrowMinLength={30}
+              shrinkArrows
+              centerOn="spread"
+              class="trip-map"
+            />
             <ol class="legs">
               {legs.map((f) => {
                 const detailed = links.reviewFor(f);
@@ -323,12 +341,12 @@ const facts: { label: string; value: string }[] = isTrip
 
   @media (min-width: 56rem) {
     .itinerary-body {
-      grid-template-columns: 20rem minmax(0, 1fr);
+      grid-template-columns: 24rem minmax(0, 1fr);
     }
   }
 
   .itinerary-body :global(.trip-map) {
-    max-width: 20rem;
+    max-width: 24rem;
     width: 100%;
     justify-self: center;
   }

@@ -1,12 +1,37 @@
 ---
 import Base from '../layouts/Base.astro';
 import RouteMap from '../components/RouteMap.astro';
-import { getFlights, getStats, formatMinutes, fmt } from '../lib/flights';
+import { getFlights, getStats, formatMinutes, fmt, routeLegs } from '../lib/flights';
+import type { MapLeg } from '../components/RouteMap.astro';
 import { getAirport } from '../data/airports';
 import { getReviews, flightLinks, reviewUrl } from '../lib/reviews';
 
 const flights = getFlights();
 const links = flightLinks(await getReviews());
+
+// The globe: one line per route, with a short summary to show when it's clicked.
+const monthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const mapLegs: MapLeg[] = routeLegs(flights).map((r) => {
+  const a = getAirport(r.from);
+  const b = getAirport(r.to);
+  const airlines = [...new Set(r.flights.map((f) => f.airline))];
+  const airlineText =
+    airlines.length <= 3 ? airlines.join(', ') : `${airlines.slice(0, 3).join(', ')} and ${airlines.length - 3} more`;
+  const reviewed = r.flights.map((f) => links.reviewFor(f)).find(Boolean);
+  return {
+    from: r.from,
+    to: r.to,
+    twoWay: r.twoWay,
+    weight: r.weight,
+    title: `${a.city} ${r.from} ${r.twoWay ? 'and' : 'to'} ${b.city} ${r.to}`,
+    lines: [
+      `${r.weight} ${r.weight === 1 ? 'flight' : 'flights'}${r.twoWay ? ', both directions' : ''}`,
+      airlineText,
+      `Last flown ${monthYear(r.flights[0].date)}`,
+    ],
+    link: reviewed ? { href: reviewUrl(reviewed), label: 'Read the review' } : undefined,
+  };
+});
 const s = getStats(flights);
 
 type Row = { name: string; sub?: string; count: number };
@@ -73,7 +98,7 @@ const laps = s.laps >= 0.1 ? s.laps.toFixed(1) : null;
     {
       s.count > 0 && (
         <div class="overview">
-        <RouteMap routes={s.routes} airports={s.airports} animate interactive class="map" />
+        <RouteMap legs={mapLegs} airports={s.airports} animate interactive class="map" />
         <dl class="facts">
           {s.minutes > 0 && (
             <div>

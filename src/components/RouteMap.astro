@@ -1,30 +1,71 @@
 ---
-// A globe with every route flown, drawn as great-circle arcs. It is rendered to SVG when
-// the site is built, facing wherever the flights are concentrated. With `interactive`,
-// visitors can turn it (drag or arrow keys) and zoom it (pinch, the buttons, + and -,
-// or double-click a spot).
+// A globe with every route flown, drawn as great-circle arcs with direction arrows. It is
+// rendered to SVG when the site is built, facing wherever the flights are concentrated.
+// With `interactive`, visitors can turn it (drag or arrow keys), zoom it (pinch, the
+// buttons, + and -, or double-click a spot), and hover or click a route to see its details.
 import { geoDistance, geoGraticule10, geoInterpolate, geoOrthographic, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import land110 from 'world-atlas/land-110m.json';
 import { getAirport } from '../data/airports';
-import { labelsThatFit } from '../lib/globe';
-import type { Route } from '../lib/flights';
+import { ARROW_PATH, arrowMarks, labelsThatFit } from '../lib/globe';
+
+export interface MapLeg {
+  from: string;
+  to: string;
+  /** Flown in both directions (draws a pair of arrows). */
+  twoWay?: boolean;
+  /** How often it was flown; thicker lines for busier routes. */
+  weight?: number;
+  /** What the info card shows when the route is clicked. */
+  title?: string;
+  lines?: string[];
+  link?: { href: string; label: string };
+}
 
 interface Props {
-  routes: Route[];
+  legs: MapLeg[];
   airports: string[];
   labels?: boolean;
   animate?: boolean;
   interactive?: boolean;
+  /** Enlarges dots, codes and arrows on globes shown small, so they stay readable. */
+  markScale?: number;
+  /** Routes shorter than this on screen (in map units) get no arrow until zoomed in. */
+  arrowMinLength?: number;
+  /**
+   * 'weighted' faces the globe toward the busiest flying (good for a whole logbook);
+   * 'spread' centres it between the two farthest airports, so every route sits well
+   * inside the globe (good for a single trip).
+   */
+  centerOn?: 'weighted' | 'spread';
+  /** Give short routes a smaller arrow instead of none (for trips, where every flight counts). */
+  shrinkArrows?: boolean;
   class?: string;
 }
 
-const { routes, airports, labels = true, animate = false, interactive = false, class: className } = Astro.props;
+const {
+  legs,
+  airports,
+  labels = true,
+  animate = false,
+  interactive = false,
+  markScale = 1,
+  arrowMinLength,
+  centerOn = 'weighted',
+  shrinkArrows = false,
+  class: className,
+} = Astro.props;
 
 const SIZE = 600;
 const PAD = 14;
 const rad = Math.PI / 180;
 const uid = Math.random().toString(36).slice(2, 8);
+const ARROW_MIN_LENGTH = arrowMinLength ?? 34 * markScale;
+
+const coords = (code: string): [number, number] => {
+  const ap = getAirport(code);
+  return [ap.lon, ap.lat];
+};
 
 // Face the globe toward the middle of all the flying, weighting each route by how often
 // it was flown and sampling along each great circle (long routes bend toward the poles).
@@ -32,21 +73,38 @@ let x = 0,
   y = 0,
   z = 0;
 const samples: [number, number][] = [];
-for (const r of routes) {
-  const a = getAirport(r.a);
-  const b = getAirport(r.b);
-  const between = geoInterpolate([a.lon, a.lat], [b.lon, b.lat]);
+for (const leg of legs) {
+  const between = geoInterpolate(coords(leg.from), coords(leg.to));
+  const w = leg.weight ?? 1;
   for (let t = 0; t <= 1; t += 0.1) {
     const [lon, lat] = between(t);
     samples.push([lon, lat]);
-    x += r.count * Math.cos(lat * rad) * Math.cos(lon * rad);
-    y += r.count * Math.cos(lat * rad) * Math.sin(lon * rad);
-    z += r.count * Math.sin(lat * rad);
+    x += w * Math.cos(lat * rad) * Math.cos(lon * rad);
+    y += w * Math.cos(lat * rad) * Math.sin(lon * rad);
+    z += w * Math.sin(lat * rad);
   }
 }
-// Keep the tilt modest so north stays roughly up, like a classroom globe.
-const centerLat = Math.max(-35, Math.min(45, Math.atan2(z, Math.hypot(x, y)) / rad));
-const center: [number, number] = [Math.atan2(y, x) / rad, centerLat];
+let center: [number, number];
+if (centerOn === 'spread' && airports.length > 1) {
+  // Midway between the two airports farthest apart, tilted no more than needed.
+  let pair: [[number, number], [number, number]] = [coords(airports[0]), coords(airports[0])];
+  let widest = -1;
+  for (const p of airports) {
+    for (const q of airports) {
+      const d = geoDistance(coords(p), coords(q));
+      if (d > widest) {
+        widest = d;
+        pair = [coords(p), coords(q)];
+      }
+    }
+  }
+  const mid = geoInterpolate(pair[0], pair[1])(0.5);
+  center = [mid[0], Math.max(-50, Math.min(60, mid[1]))];
+} else {
+  // Keep the tilt modest so north stays roughly up, like a classroom globe.
+  const centerLat = Math.max(-35, Math.min(45, Math.atan2(z, Math.hypot(x, y)) / rad));
+  center = [Math.atan2(y, x) / rad, centerLat];
+}
 const farthest = Math.max(0, ...samples.map((p) => geoDistance(center, p))) / rad;
 
 const projection = geoOrthographic().rotate([-center[0], -center[1]]);
@@ -75,26 +133,28 @@ const land = path(feature(land110 as any, (land110 as any).objects.land) as any)
 const sphere = path({ type: 'Sphere' }) ?? '';
 const graticule = path(geoGraticule10()) ?? '';
 
-const max = Math.max(1, ...routes.map((r) => r.count));
-const many = routes.length > 20;
+const max = Math.max(1, ...legs.map((l) => l.weight ?? 1));
+const many = legs.length > 20;
 // Least-flown first, so the busiest routes are drawn on top.
-const ordered = [...routes].sort((p, q) => p.count - q.count);
-const arcs = ordered.map((r, i) => {
-  const a = getAirport(r.a);
-  const b = getAirport(r.b);
-  const coords: [[number, number], [number, number]] = [
-    [a.lon, a.lat],
-    [b.lon, b.lat],
-  ];
+const ordered = legs.map((leg, index) => ({ leg, index })).sort((p, q) => (p.leg.weight ?? 1) - (q.leg.weight ?? 1));
+const arcs = ordered.map(({ leg }, i) => {
+  const a = coords(leg.from);
+  const b = coords(leg.to);
+  const d = path({ type: 'LineString', coordinates: [a, b] }) ?? '';
   return {
-    coords,
-    d: path({ type: 'LineString', coordinates: coords }) ?? '',
-    width: +((many ? 1 : 1.6) + 2.6 * Math.sqrt(r.count / max)).toFixed(2),
+    leg,
+    a,
+    b,
+    d,
+    width: +((many ? 1 : 1.6) + 2.6 * Math.sqrt((leg.weight ?? 1) / max)).toFixed(2),
     // Spread the draw-in over about 1.4 seconds however many routes there are.
     delay: (0.15 + (i / Math.max(1, ordered.length)) * 1.4).toFixed(2),
-    label: `${r.a} – ${r.b}: ${r.count} ${r.count === 1 ? 'flight' : 'flights'}`,
+    arrows: arrowMarks((p) => projection(p), center, a, b, !!leg.twoWay, ARROW_MIN_LENGTH, shrinkArrows),
+    label: leg.title ?? `${leg.from} to ${leg.to}`,
   };
 });
+// With a handful of routes, each one is reachable with the Tab key too.
+const tabbable = interactive && arcs.length <= 15;
 
 const points = airports.map((code) => {
   const ap = getAirport(code);
@@ -107,37 +167,59 @@ const dots = points.flatMap((p) => {
   const xy = projection([p.lon, p.lat]);
   return xy ? [{ ...p, x: xy[0], y: xy[1] }] : [];
 });
-const fit = labels ? labelsThatFit(dots, SIZE) : new Map<string, number>();
+const fit = labels ? labelsThatFit(dots, SIZE, markScale) : new Map<string, number>();
+const fmt = (n: number) => n.toFixed(1);
 
-const top = [...routes].sort((p, q) => q.count - p.count).slice(0, 5);
-const summary = `${routes.length} ${routes.length === 1 ? 'route' : 'routes'}; most flown: ${top
-  .map((r) => `${r.a}–${r.b} (${r.count})`)
-  .join(', ')}`;
+const top = [...legs].sort((p, q) => (q.weight ?? 1) - (p.weight ?? 1)).slice(0, 5);
+const summary = `${legs.length} ${legs.length === 1 ? 'route' : 'routes'}: ${top
+  .map((l) => `${l.from} to ${l.to}`)
+  .join(', ')}${legs.length > 5 ? ', and more' : ''}`;
 
-// What the browser needs to redraw the globe as it turns and zooms.
+// What the browser needs to redraw the globe as it turns and zooms, and to show route details.
 const mapData = interactive
   ? JSON.stringify({
       size: SIZE,
       scale: projection.scale(),
       translate: projection.translate(),
       rotate: projection.rotate(),
-      routes: arcs.map((a) => a.coords),
+      markScale,
+      arrowMin: ARROW_MIN_LENGTH,
+      shrinkArrows,
+      legs: arcs.map((arc) => ({
+        a: arc.a,
+        b: arc.b,
+        twoWay: !!arc.leg.twoWay,
+        title: arc.leg.title ?? '',
+        lines: arc.leg.lines ?? [],
+        link: arc.leg.link ?? null,
+      })),
       airports: points,
       labels,
     })
   : undefined;
 ---
 
-<figure class:list={['route-map', className, animate && 'animate', interactive && 'interactive']} data-map={mapData}>
+<figure
+  class:list={['route-map', className, animate && 'animate', interactive && 'interactive']}
+  data-map={mapData}
+  style={`--mark: ${markScale}`}
+>
   <div class="stage">
     <svg
       viewBox={`0 0 ${SIZE} ${SIZE}`}
       role="img"
-      aria-label={`Globe of routes flown: ${summary}`}
+      aria-label={`Globe of routes flown, ${summary}`}
       tabindex={interactive ? 0 : undefined}
     >
       <defs>
         <clipPath id={`map-sphere-${uid}`}><path class="sphere-clip" d={sphere} /></clipPath>
+        <filter id="route-glow" filterUnits="userSpaceOnUse" x="0" y="0" width={SIZE} height={SIZE}>
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
       <g clip-path={`url(#map-sphere-${uid})`}>
         <path class="sea" d={sphere} />
@@ -146,10 +228,31 @@ const mapData = interactive
       </g>
       <g class:list={['arcs', many && 'many']}>
         {
-          arcs.map((a) => (
-            <path d={a.d} stroke-width={a.width} pathLength="1" style={`--d:${a.delay}s`}>
-              <title>{a.label}</title>
-            </path>
+          arcs.map((arc, i) => (
+            <g class="leg" data-leg={i}>
+              <path class="arc" d={arc.d} stroke-width={arc.width} pathLength="1" style={`--d:${arc.delay}s`}>
+                {!interactive && <title>{arc.label}</title>}
+              </path>
+              <g class="arrows" aria-hidden="true">
+                {arc.arrows.map((m) => (
+                  <path
+                    class="arrow"
+                    d={ARROW_PATH}
+                    transform={`translate(${fmt(m.x)} ${fmt(m.y)}) rotate(${fmt(m.angle)}) scale(${fmt(markScale * m.size)})`}
+                  />
+                ))}
+              </g>
+              {interactive && (
+                <path
+                  class="hit"
+                  d={arc.d}
+                  stroke-width={Math.max(14, 12 * markScale)}
+                  tabindex={tabbable ? 0 : undefined}
+                  role={tabbable ? 'button' : undefined}
+                  aria-label={tabbable ? arc.label : undefined}
+                />
+              )}
+            </g>
           ))
         }
       </g>
@@ -157,7 +260,7 @@ const mapData = interactive
         {
           dots.map((d) => (
             <g>
-              <circle cx={d.x} cy={d.y} r="3.5">
+              <circle cx={d.x} cy={d.y} r={3.5 * markScale}>
                 <title>
                   {d.code}, {d.city}
                 </title>
@@ -174,45 +277,73 @@ const mapData = interactive
     </svg>
     {
       interactive && (
-        <div class="controls" role="group" aria-label="Globe controls">
-          <button type="button" data-action="in" aria-label="Zoom in" title="Zoom in">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M8 3v10M3 8h10" />
-            </svg>
-          </button>
-          <button type="button" data-action="out" aria-label="Zoom out" title="Zoom out">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M3 8h10" />
-            </svg>
-          </button>
-          <button type="button" data-action="reset" aria-label="Reset view" title="Reset view">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M3.5 8a4.5 4.5 0 1 0 1.3-3.2M3.5 2.5v2.8h2.8" />
-            </svg>
-          </button>
-        </div>
+        <>
+          <div class="controls" role="group" aria-label="Globe controls">
+            <button type="button" data-action="in" aria-label="Zoom in" title="Zoom in">
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M8 3v10M3 8h10" />
+              </svg>
+            </button>
+            <button type="button" data-action="out" aria-label="Zoom out" title="Zoom out">
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M3 8h10" />
+              </svg>
+            </button>
+            <button type="button" data-action="reset" aria-label="Reset view" title="Reset view">
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M3.5 8a4.5 4.5 0 1 0 1.3-3.2M3.5 2.5v2.8h2.8" />
+              </svg>
+            </button>
+          </div>
+          <div class="leg-info" role="status" hidden>
+            <button type="button" class="info-close" aria-label="Close">
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M4 4l8 8M12 4l-8 8" />
+              </svg>
+            </button>
+            <p class="info-title" />
+            <ul class="info-lines" />
+            <a class="info-link" hidden />
+          </div>
+        </>
       )
     }
   </div>
-  {interactive && <figcaption class="hint">Drag to turn the globe. Pinch, double-click or use the buttons to zoom.</figcaption>}
+  {
+    interactive && (
+      <figcaption class="hint">Drag to turn, pinch or use the buttons to zoom, and tap or click a route for details.</figcaption>
+    )
+  }
 </figure>
 
 <script>
   import { geoDistance, geoGraticule10, geoOrthographic, geoPath } from 'd3-geo';
   import { feature } from 'topojson-client';
   import land110 from 'world-atlas/land-110m.json';
-  import { labelsThatFit } from '../lib/globe';
+  import { ARROW_PATH, arrowMarks, labelsThatFit } from '../lib/globe';
 
   const NS = 'http://www.w3.org/2000/svg';
   const MAX_ZOOM = 60;
   const DETAIL_ZOOM = 4; // switch to the detailed coastline from here
+  type LonLat = [number, number];
   type Pt = { code: string; city: string; lon: number; lat: number };
+  type Leg = {
+    a: LonLat;
+    b: LonLat;
+    twoWay: boolean;
+    title: string;
+    lines: string[];
+    link: { href: string; label: string } | null;
+  };
   type MapData = {
     size: number;
     scale: number;
     translate: [number, number];
     rotate: [number, number, number];
-    routes: [[number, number], [number, number]][];
+    markScale: number;
+    arrowMin: number;
+    shrinkArrows: boolean;
+    legs: Leg[];
     airports: Pt[];
     labels: boolean;
   };
@@ -220,19 +351,23 @@ const mapData = interactive
   const coarseLand = feature(land110 as any, (land110 as any).objects.land) as any;
   let detailedLand: any = null;
   let detailRequested = false;
+  const detailListeners: (() => void)[] = [];
   const graticule = geoGraticule10();
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+  const f1 = (n: number) => n.toFixed(1);
 
   document.querySelectorAll<HTMLElement>('.route-map[data-map]').forEach((figure) => {
     const data: MapData = JSON.parse(figure.dataset.map!);
-    const svg = figure.querySelector<SVGSVGElement>(':scope > .stage > svg')!;
+    const stage = figure.querySelector<HTMLElement>(':scope > .stage')!;
+    const svg = stage.querySelector<SVGSVGElement>(':scope > svg')!;
+    const arcsGroup = svg.querySelector('.arcs')!;
     const els = {
       sea: svg.querySelector('.sea')!,
       clip: svg.querySelector('.sphere-clip')!,
       land: svg.querySelector('.land')!,
       graticule: svg.querySelector('.graticule')!,
-      arcs: [...svg.querySelectorAll<SVGPathElement>('.arcs path')],
+      legs: [...svg.querySelectorAll<SVGGElement>('.leg')],
       airports: svg.querySelector('.airports')!,
     };
     const buttons = {
@@ -240,29 +375,41 @@ const mapData = interactive
       out: figure.querySelector<HTMLButtonElement>('[data-action="out"]')!,
       reset: figure.querySelector<HTMLButtonElement>('[data-action="reset"]')!,
     };
+    const info = {
+      box: figure.querySelector<HTMLElement>('.leg-info')!,
+      title: figure.querySelector<HTMLElement>('.info-title')!,
+      lines: figure.querySelector<HTMLElement>('.info-lines')!,
+      link: figure.querySelector<HTMLAnchorElement>('.info-link')!,
+      close: figure.querySelector<HTMLButtonElement>('.info-close')!,
+    };
 
     const baseScale = data.scale;
     const projection = geoOrthographic().scale(baseScale).translate(data.translate).rotate(data.rotate);
     const path = geoPath(projection);
     let zoom = 1;
+    let selected: number | null = null;
+
+    const viewCenter = (): LonLat => {
+      const [l, p] = projection.rotate();
+      return [-l, -p];
+    };
 
     function drawAirports() {
-      const [l, p] = projection.rotate();
-      const center: [number, number] = [-l, -p];
+      const center = viewCenter();
       const dots: (Pt & { x: number; y: number })[] = [];
       for (const ap of data.airports) {
         if (geoDistance(center, [ap.lon, ap.lat]) >= Math.PI / 2) continue;
         const xy = projection([ap.lon, ap.lat]);
         if (xy) dots.push({ ...ap, x: xy[0], y: xy[1] });
       }
-      const fit = data.labels ? labelsThatFit(dots, data.size) : new Map<string, number>();
+      const fit = data.labels ? labelsThatFit(dots, data.size, data.markScale) : new Map<string, number>();
       const frag = document.createDocumentFragment();
       for (const d of dots) {
         const g = document.createElementNS(NS, 'g');
         const c = document.createElementNS(NS, 'circle');
-        c.setAttribute('cx', d.x.toFixed(1));
-        c.setAttribute('cy', d.y.toFixed(1));
-        c.setAttribute('r', '3.5');
+        c.setAttribute('cx', f1(d.x));
+        c.setAttribute('cy', f1(d.y));
+        c.setAttribute('r', String(3.5 * data.markScale));
         const title = document.createElementNS(NS, 'title');
         title.textContent = `${d.code}, ${d.city}`;
         c.appendChild(title);
@@ -270,8 +417,8 @@ const mapData = interactive
         const dy = fit.get(d.code);
         if (dy !== undefined) {
           const t = document.createElementNS(NS, 'text');
-          t.setAttribute('x', d.x.toFixed(1));
-          t.setAttribute('y', (d.y + dy).toFixed(1));
+          t.setAttribute('x', f1(d.x));
+          t.setAttribute('y', f1(d.y + dy));
           t.setAttribute('text-anchor', 'middle');
           t.textContent = d.code;
           g.appendChild(t);
@@ -281,15 +428,45 @@ const mapData = interactive
       els.airports.replaceChildren(frag);
     }
 
+    function drawLegs() {
+      const center = viewCenter();
+      for (const g of els.legs) {
+        const leg = data.legs[Number(g.dataset.leg)];
+        const d = path({ type: 'LineString', coordinates: [leg.a, leg.b] }) ?? '';
+        g.querySelector('.arc')!.setAttribute('d', d);
+        g.querySelector('.hit')?.setAttribute('d', d);
+        const marks = arrowMarks(
+          (p) => projection(p) as [number, number] | null,
+          center,
+          leg.a,
+          leg.b,
+          leg.twoWay,
+          data.arrowMin,
+          data.shrinkArrows,
+        );
+        const arrows = g.querySelector('.arrows')!;
+        arrows.replaceChildren(
+          ...marks.map((m) => {
+            const el = document.createElementNS(NS, 'path');
+            el.setAttribute('class', 'arrow');
+            el.setAttribute('d', ARROW_PATH);
+            el.setAttribute(
+              'transform',
+              `translate(${f1(m.x)} ${f1(m.y)}) rotate(${f1(m.angle)}) scale(${f1(data.markScale * m.size)})`,
+            );
+            return el;
+          }),
+        );
+      }
+    }
+
     function draw() {
       const sphere = path({ type: 'Sphere' }) ?? '';
       els.sea.setAttribute('d', sphere);
       els.clip.setAttribute('d', sphere);
       els.land.setAttribute('d', path(zoom >= DETAIL_ZOOM && detailedLand ? detailedLand : coarseLand) ?? '');
       els.graticule.setAttribute('d', path(graticule) ?? '');
-      els.arcs.forEach((el, i) => {
-        el.setAttribute('d', path({ type: 'LineString', coordinates: data.routes[i] }) ?? '');
-      });
+      drawLegs();
       drawAirports();
       buttons.in.disabled = zoom >= MAX_ZOOM - 0.01;
       buttons.out.disabled = zoom <= 1.001;
@@ -302,16 +479,101 @@ const mapData = interactive
     };
 
     function loadDetail() {
-      if (detailRequested || zoom < DETAIL_ZOOM) return;
+      if (zoom < DETAIL_ZOOM) return;
+      if (detailedLand) return;
+      detailListeners.push(schedule);
+      if (detailRequested) return;
       detailRequested = true;
       import('world-atlas/land-50m.json').then((m: any) => {
         const topo = m.default ?? m;
         detailedLand = feature(topo, topo.objects.land);
-        schedule();
+        detailListeners.forEach((fn) => fn());
       });
     }
 
+    // ---------- Route details ----------
+
+    function closeInfo() {
+      if (selected === null) return;
+      selected = null;
+      info.box.hidden = true;
+      figure.classList.remove('has-selection');
+      els.legs.forEach((g) => g.classList.remove('selected'));
+    }
+
+    /** Open the card for a route, next to a point given in page (client) coordinates. */
+    function openInfo(index: number, clientX: number, clientY: number) {
+      const leg = data.legs[index];
+      if (!leg.title) return;
+      selected = index;
+      const g = els.legs.find((el) => Number(el.dataset.leg) === index)!;
+      els.legs.forEach((el) => el.classList.toggle('selected', el === g));
+      // Bring the chosen route to the front (moving it drops keyboard focus, so put it back).
+      const hadFocus = g.contains(document.activeElement);
+      arcsGroup.appendChild(g);
+      if (hadFocus) g.querySelector<SVGPathElement>('.hit')?.focus();
+      figure.classList.add('has-selection');
+
+      info.title.textContent = leg.title;
+      info.lines.replaceChildren(
+        ...leg.lines.map((line) => {
+          const li = document.createElement('li');
+          li.textContent = line;
+          return li;
+        }),
+      );
+      info.link.hidden = !leg.link;
+      if (leg.link) {
+        info.link.href = leg.link.href;
+        info.link.textContent = leg.link.label;
+      }
+
+      info.box.hidden = false;
+      const s = stage.getBoundingClientRect();
+      const w = info.box.offsetWidth;
+      const h = info.box.offsetHeight;
+      const x = clientX - s.left;
+      const y = clientY - s.top;
+      const left = clamp(x - w / 2, 4, s.width - w - 4);
+      const top = y - h - 14 >= 4 ? y - h - 14 : Math.min(y + 14, s.height - h - 4);
+      info.box.style.left = `${left}px`;
+      info.box.style.top = `${top}px`;
+    }
+
+    /** The middle of a route on screen, for opening its card from the keyboard. */
+    function legMidpoint(g: SVGGElement): [number, number] {
+      const arc = g.querySelector<SVGPathElement>('.arc')!;
+      const total = arc.getTotalLength();
+      const pt = arc.getPointAtLength(total / 2);
+      const box = svg.getBoundingClientRect();
+      const k = box.width / data.size;
+      return [box.left + pt.x * k, box.top + pt.y * k];
+    }
+
+    info.close.addEventListener('click', closeInfo);
+    document.addEventListener('pointerdown', (e) => {
+      if (selected !== null && !figure.contains(e.target as Node)) closeInfo();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeInfo();
+    });
+    els.legs.forEach((g) => {
+      g.querySelector('.hit')?.addEventListener('keydown', (e) => {
+        const key = (e as KeyboardEvent).key;
+        if (key !== 'Enter' && key !== ' ') return;
+        e.preventDefault();
+        e.stopPropagation();
+        const index = Number(g.dataset.leg);
+        if (selected === index) return closeInfo();
+        const [cx, cy] = legMidpoint(g);
+        openInfo(index, cx, cy);
+      });
+    });
+
+    // ---------- Turning and zooming ----------
+
     function set(rotation: [number, number, number] | null, newZoom: number | null) {
+      closeInfo(); // the card would no longer point at its route
       if (rotation) projection.rotate([rotation[0], clamp(rotation[1], -75, 75), rotation[2]]);
       if (newZoom !== null) {
         zoom = clamp(newZoom, 1, MAX_ZOOM);
@@ -341,10 +603,12 @@ const mapData = interactive
       tween = requestAnimationFrame(step);
     }
 
-    // Pointer input: one finger or mouse turns, two fingers pinch to zoom.
+    // Pointer input: one finger or mouse turns, two fingers pinch to zoom, a tap or click
+    // on a route opens its details.
     const pointers = new Map<number, { x: number; y: number }>();
     let drag: { x: number; y: number; rotate: [number, number, number] } | null = null;
     let pinch: { dist: number; zoom: number } | null = null;
+    let press: { x: number; y: number; leg: number | null; moved: boolean; multi: boolean } | null = null;
     const degreesPerPixel = () =>
       (180 / Math.PI / projection.scale()) * (data.size / svg.getBoundingClientRect().width);
     const distance = () => {
@@ -357,9 +621,15 @@ const mapData = interactive
     };
 
     svg.addEventListener('pointerdown', (e) => {
-      // Stops the browser from focusing the globe (the frame) or selecting text (the blue wash).
+      // Stops the browser from focusing the globe (a frame) or selecting text (a blue wash).
       e.preventDefault();
       cancelAnimationFrame(tween);
+      const legEl = (e.target as Element).closest<SVGGElement>('.leg');
+      if (pointers.size === 0) {
+        press = { x: e.clientX, y: e.clientY, leg: legEl ? Number(legEl.dataset.leg) : null, moved: false, multi: false };
+      } else if (press) {
+        press.multi = true;
+      }
       svg.setPointerCapture(e.pointerId);
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pointers.size === 1) startDrag();
@@ -372,6 +642,8 @@ const mapData = interactive
     svg.addEventListener('pointermove', (e) => {
       if (!pointers.has(e.pointerId)) return;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (press && !press.moved && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 5) press.moved = true;
+      if (!press?.moved && !pinch) return;
       if (pinch && pointers.size >= 2) {
         set(null, pinch.zoom * (distance() / pinch.dist));
       } else if (drag) {
@@ -381,12 +653,19 @@ const mapData = interactive
       }
     });
     const release = (e: PointerEvent) => {
+      if (!pointers.has(e.pointerId)) return;
       pointers.delete(e.pointerId);
       pinch = null;
       if (pointers.size === 1) startDrag();
       if (pointers.size === 0) {
         drag = null;
         figure.classList.remove('dragging');
+        // A tap or click that didn't move: open (or close) a route's details.
+        if (press && !press.moved && !press.multi && e.type === 'pointerup') {
+          if (press.leg === null || press.leg === selected) closeInfo();
+          else openInfo(press.leg, e.clientX, e.clientY);
+        }
+        press = null;
       }
     };
     svg.addEventListener('pointerup', release);
@@ -419,7 +698,7 @@ const mapData = interactive
       const ratio = data.size / box.width;
       const spot = projection.invert!([(e.clientX - box.left) * ratio, (e.clientY - box.top) * ratio]);
       const [, , g] = projection.rotate();
-      if (spot && geoDistance([-projection.rotate()[0], -projection.rotate()[1]], spot) < Math.PI / 2) {
+      if (spot && geoDistance(viewCenter(), spot) < Math.PI / 2) {
         animateTo([-spot[0], -spot[1], g], zoom * 2);
       } else {
         animateTo(projection.rotate(), zoom * 2);
@@ -536,7 +815,8 @@ const mapData = interactive
     cursor: default;
   }
 
-  .controls svg {
+  .controls svg,
+  .info-close svg {
     width: 1rem;
     height: 1rem;
     fill: none;
@@ -572,45 +852,166 @@ const mapData = interactive
     stroke-width: 0.6;
   }
 
-  .arcs path {
+  /* ---------- Routes ---------- */
+
+  .arc {
     fill: none;
     stroke: var(--red);
     stroke-linecap: round;
+    transition: opacity 0.15s ease;
   }
 
-  .arcs.many path {
+  .arcs.many .arc {
     stroke-opacity: 0.7;
   }
+
+  .arcs :global(.arrow) {
+    fill: var(--red);
+    stroke: var(--surface);
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+    transition:
+      fill-opacity 0.15s ease,
+      stroke-opacity 0.15s ease;
+  }
+
+  .hit {
+    fill: none;
+    stroke: transparent;
+    pointer-events: stroke;
+    cursor: pointer;
+    outline: none;
+  }
+
+  /* Hovering or choosing a route makes it glow, and fades the others back. */
+  .interactive:not(.dragging) .leg:hover .arc,
+  .interactive .leg:has(.hit:focus-visible) .arc,
+  .leg.selected .arc {
+    stroke-opacity: 1;
+    filter: url(#route-glow);
+  }
+
+  .interactive:not(.dragging) .arcs:has(.leg:hover) .leg:not(:hover) .arc,
+  .interactive .arcs:has(.hit:focus-visible) .leg:not(:has(.hit:focus-visible)) .arc,
+  .has-selection .leg:not(.selected) .arc {
+    opacity: 0.2;
+  }
+
+  .interactive:not(.dragging) .arcs:has(.leg:hover) .leg:not(:hover) :global(.arrow),
+  .interactive .arcs:has(.hit:focus-visible) .leg:not(:has(.hit:focus-visible)) :global(.arrow),
+  .has-selection .leg:not(.selected) :global(.arrow) {
+    fill-opacity: 0.2;
+    stroke-opacity: 0.2;
+  }
+
+  /* No hover effects while the globe is being dragged. */
+  .interactive.dragging .leg:hover:not(.selected) .arc {
+    filter: none;
+  }
+
+  /* ---------- Airports ---------- */
 
   .airports :global(circle) {
     fill: var(--ink);
     stroke: var(--surface);
-    stroke-width: 1.5;
+    stroke-width: calc(1.5px * var(--mark, 1));
   }
 
   .airports :global(text) {
     font-family: var(--font-body);
-    font-size: 13px;
+    font-size: calc(13px * var(--mark, 1));
     font-weight: 700;
     fill: var(--ink);
     paint-order: stroke;
     stroke: var(--surface);
-    stroke-width: 4px;
+    stroke-width: calc(4px * var(--mark, 1));
     stroke-linejoin: round;
     pointer-events: none;
   }
 
+  /* ---------- Route details card ---------- */
+
+  .leg-info {
+    position: absolute;
+    z-index: 2;
+    width: max-content;
+    max-width: min(17rem, calc(100% - 0.5rem));
+    padding: 0.75rem 2.4rem 0.8rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--red);
+    border-radius: var(--radius);
+    box-shadow: 0 6px 20px rgba(27, 43, 75, 0.16);
+    font-size: var(--step--1);
+    line-height: 1.45;
+    color: var(--text);
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  .leg-info[hidden] {
+    display: none;
+  }
+
+  .info-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    line-height: 1.25;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+
+  .info-lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .info-link {
+    display: inline-block;
+    margin-top: 0.45rem;
+    font-weight: 600;
+  }
+
+  .info-close {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .info-close:hover {
+    background: var(--paper-deep);
+    color: var(--ink);
+  }
+
   /* One moment of motion: routes draw themselves in when the Logbook opens. */
   @media (prefers-reduced-motion: no-preference) {
-    .animate .arcs path {
+    .animate .arc {
       stroke-dasharray: 1;
       stroke-dashoffset: 1;
       animation: draw 1.6s cubic-bezier(0.45, 0, 0.2, 1) forwards;
       animation-delay: var(--d);
     }
+    .animate .arrows,
     .animate .airports {
       opacity: 0;
-      animation: appear 0.5s ease-out 0.1s forwards;
+      animation: appear 0.5s ease-out forwards;
+    }
+    .animate .arrows {
+      animation-delay: 1.9s;
+    }
+    .animate .airports {
+      animation-delay: 0.1s;
     }
   }
 
