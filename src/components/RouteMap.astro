@@ -360,8 +360,9 @@ const mapData = interactive
   const LOGO_OVERRIDES: Record<string, string> = {
     NH: KIWI('NH'), // ANA
     MU: KIWI('MU'), // China Eastern: the square crop cut off part of the logo
-    KA: KIWI('KA'), // Cathay Dragon: the code now points at a different logo
   };
+  // No correct logo online for these yet: show the code badge until a file is added to src/assets/logos.
+  const BADGE_ONLY = new Set(['KA']); // Cathay Dragon (2016–2020 red brushwing)
   const MAX_ZOOM = 60;
   const DETAIL_ZOOM = 4; // switch to the detailed coastline from here
   type LonLat = [number, number];
@@ -553,7 +554,7 @@ const mapData = interactive
         box.replaceChildren(row.code);
         box.classList.add('code');
       };
-      if (!/^[A-Z0-9]{2}$/.test(row.code)) {
+      if (!/^[A-Z0-9]{2}$/.test(row.code) || (BADGE_ONLY.has(row.code) && !LOCAL_LOGOS[row.code])) {
         badge();
         return box;
       }
