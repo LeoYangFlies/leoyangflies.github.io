@@ -740,9 +740,50 @@ const mapData = interactive
     };
 
     const clearPressing = () => els.legs.forEach((g) => g.classList.remove('pressing'));
+
+    // Hover intent: a route lights up only once the cursor rests on it briefly, and the
+    // lit route stays lit while the cursor crosses others, so sweeping across the globe
+    // doesn't flicker. Leaving gets a short grace period too.
+    const HOVER_ENTER_MS = 150;
+    const HOVER_LEAVE_MS = 200;
+    let hovered: SVGGElement | null = null;
+    let hoverCandidate: SVGGElement | null = null;
+    let hoverTimer = 0;
+    const setHovered = (g: SVGGElement | null) => {
+      if (hovered === g) return;
+      hovered?.classList.remove('hovered');
+      hovered = g;
+      hovered?.classList.add('hovered');
+    };
+    const clearHover = () => {
+      clearTimeout(hoverTimer);
+      hoverCandidate = null;
+      setHovered(null);
+    };
+    const considerHover = (g: SVGGElement | null) => {
+      if (g === hovered) {
+        // Back on (or still on) the lit route: cancel any pending change.
+        clearTimeout(hoverTimer);
+        hoverCandidate = g;
+        return;
+      }
+      if (g === hoverCandidate) return; // already waiting to switch to this one
+      hoverCandidate = g;
+      clearTimeout(hoverTimer);
+      hoverTimer = window.setTimeout(() => setHovered(hoverCandidate), g ? HOVER_ENTER_MS : HOVER_LEAVE_MS);
+    };
+    svg.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'touch' || pointers.size > 0) return;
+      considerHover((e.target as Element).closest<SVGGElement>('.leg'));
+    });
+    svg.addEventListener('pointerleave', (e) => {
+      if (e.pointerType === 'touch' || pointers.size > 0) return;
+      considerHover(null);
+    });
     // Only a real drag (the pointer moved) or a pinch switches off the route highlights.
     const startDragging = () => {
       clearPressing();
+      clearHover();
       figure.classList.add('dragging');
     };
 
@@ -755,6 +796,11 @@ const mapData = interactive
         press = { x: e.clientX, y: e.clientY, leg: legEl ? Number(legEl.dataset.leg) : null, moved: false, multi: false };
         // Keep the route lit while it's being pressed (pointer capture ends its :hover).
         legEl?.classList.add('pressing');
+        if (legEl && e.pointerType !== 'touch') {
+          clearTimeout(hoverTimer);
+          hoverCandidate = legEl;
+          setHovered(legEl);
+        }
       } else if (press) {
         press.multi = true;
       }
@@ -1021,7 +1067,7 @@ const mapData = interactive
   }
 
   /* Hovering or choosing a route makes it glow, and fades the others back. */
-  .interactive:not(.dragging) .leg:hover .arc,
+  .interactive:not(.dragging) .leg.hovered .arc,
   .interactive .leg.pressing .arc,
   .interactive .leg:has(.hit:focus-visible) .arc,
   .leg.selected .arc {
@@ -1029,14 +1075,14 @@ const mapData = interactive
     filter: url(#route-glow);
   }
 
-  .interactive:not(.dragging) .arcs:has(.leg:hover) .leg:not(:hover) .arc,
+  .interactive:not(.dragging) .arcs:has(.leg.hovered) .leg:not(.hovered) .arc,
   .interactive .arcs:has(.leg.pressing) .leg:not(.pressing) .arc,
   .interactive .arcs:has(.hit:focus-visible) .leg:not(:has(.hit:focus-visible)) .arc,
   .has-selection .leg:not(.selected) .arc {
     opacity: 0.2;
   }
 
-  .interactive:not(.dragging) .arcs:has(.leg:hover) .leg:not(:hover) :global(.arrow),
+  .interactive:not(.dragging) .arcs:has(.leg.hovered) .leg:not(.hovered) :global(.arrow),
   .interactive .arcs:has(.leg.pressing) .leg:not(.pressing) :global(.arrow),
   .interactive .arcs:has(.hit:focus-visible) .leg:not(:has(.hit:focus-visible)) :global(.arrow),
   .has-selection .leg:not(.selected) :global(.arrow) {
@@ -1045,7 +1091,7 @@ const mapData = interactive
   }
 
   /* No hover effects while the globe is being dragged. */
-  .interactive.dragging .leg:hover:not(.selected) .arc {
+  .interactive.dragging .leg.hovered:not(.selected) .arc {
     filter: none;
   }
 
