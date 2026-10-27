@@ -3,6 +3,7 @@ title: 'Cathay Pacific A350‑1000 business class, Hong Kong to Toronto'
 description: 'An oversold premium economy cabin meant a surprise upgrade to Cathay’s business class on the overnight flight from Hong Kong to Toronto.'
 published: 2026-10-26
 category: flight
+trip: back-to-school-august-2026
 date: 2026-08-22
 airline: Cathay Pacific
 flight: CX 820
@@ -28,7 +29,7 @@ cover: ./images/cx820-hkg-yyz/02-seat-and-screen.jpg
 coverAlt: 'Seat 22D in Cathay Pacific business class, with the screen swung out showing the flight to Toronto'
 ---
 
-Welcome on board Cathay Pacific’s Airbus A350-1000 in business class, flying from Hong Kong to Toronto. This one was a pleasant surprise: premium economy was oversold, and I was upgraded to business. Cathay was one of the few big oneworld airlines whose long-haul business class I’d never found an easy way to book cheaply, so the upgrade also ticked off another box for me.
+Welcome on board Cathay Pacific’s Airbus A350-1000 in business class, flying from Hong Kong to Toronto. This one was a pleasant surprise: as I explain in the [trip report](/reviews/back-to-school-august-2026/), premium economy was oversold, and I was upgraded to business. Cathay was one of the few big oneworld airlines whose long-haul business class I’d never found an easy way to book cheaply, so the upgrade also ticked off another box for me.
 
 The short version: Cathay’s A350-1000 business class is among the best of the previous-generation business class seats, the food is great (the à la carte snack was the highlight), and the service was as consistent as it always is on Cathay. It’s never over the top, but never underwhelming either.
 

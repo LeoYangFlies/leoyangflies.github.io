@@ -46,6 +46,8 @@ const reviews = defineCollection({
         // Trip reports: every Logbook flight from start to end (inclusive) becomes the itinerary.
         start: z.coerce.date().optional(),
         end: z.coerce.date().optional(),
+        // Trips back to school: how much Leo would recommend this routing, out of 10.
+        routeScore: z.number().min(0).max(10).optional(),
 
         // Detailed reviews: the trip report they belong to (its file name, without .md),
         // and for flights, the date flown, which links the review to that flight in the Logbook.

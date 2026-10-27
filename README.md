@@ -48,6 +48,8 @@ published: 2026-10-30
 category: trip
 start: 2026-08-21
 end: 2026-08-22
+routeScore: 7       # optional, out of 10: how much you'd recommend this routing back to school
+verdict: 'One-sentence summary for the In short box.'
 cover: ./images/aug-2026-cover.jpg
 coverAlt: 'Describe the photo'
 ---
