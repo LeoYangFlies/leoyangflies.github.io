@@ -38,7 +38,7 @@ If you want to try my approach (and I highly recommend it), look for a small cro
 
 ![Wearing the small black crossbody bag, which sits at about hip height](./images/crossbody-bag/02-worn.jpg)
 
-My WANDRD X1 in medium fits everything on the list without being too big. Here’s the inside: the main compartment holds everything except the wallet, which goes in the pouch in the front flap. That pouch is also designed to fit a pair of sunglasses in their case instead.
+My WANDRD X1 in medium fits everything on the list without being too big. Here’s the inside: the main compartment holds everything except the wallet, which goes in the pouch in the front flap. That pouch is also designed to fit a pair of sunglasses in their case instead. There’s also a thin magnetic compartment at the back for a phone, but it isn’t very easy to get into, so I usually leave it empty and keep my phone in my pocket.
 
 ![The open bag from above, with everything packed into the main compartment and its slip pockets](./images/crossbody-bag/03-inside.jpg)
 
