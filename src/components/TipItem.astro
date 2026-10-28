@@ -1,23 +1,42 @@
 ---
-// One tip in a list: its topic as a luggage tag, the title, a one-line summary.
+// One guide in a list. Two looks:
+// - "row" (under an article): its topic as a luggage tag, the title and a one-line summary;
+// - "card" (home page and the Guides page): a big cover, the tag and the title.
+import Cover from './Cover.astro';
 import { readingMinutes, tipUrl, topicLabel, type Tip } from '../lib/tips';
 
 interface Props {
   tip: Tip;
   headingLevel?: 'h2' | 'h3';
+  variant?: 'row' | 'card';
 }
 
-const { tip, headingLevel = 'h3' } = Astro.props;
+const { tip, headingLevel = 'h3', variant = 'row' } = Astro.props;
 const Heading = headingLevel;
+const card = variant === 'card';
 ---
 
-<article class="tip" data-topic={tip.data.topic}>
+<article class:list={['tip', { card }]} data-topic={tip.data.topic}>
+  {
+    card && (
+      <a class="thumb" href={tipUrl(tip)} tabindex="-1" aria-hidden="true">
+        <Cover
+          image={tip.data.cover}
+          alt=""
+          label={topicLabel(tip.data.topic)}
+          ratio="3 / 2"
+          widths={[400, 700, 1000]}
+          sizes="(min-width: 72rem) 23rem, (min-width: 44rem) 46vw, 100vw"
+        />
+      </a>
+    )
+  }
   <p class="meta">
     <span class="tag">{topicLabel(tip.data.topic)}</span>
     <span>{readingMinutes(tip)} min read</span>
   </p>
   <Heading class="title"><a href={tipUrl(tip)}>{tip.data.title}</a></Heading>
-  <p class="desc">{tip.data.description}</p>
+  {!card && <p class="desc">{tip.data.description}</p>}
 </article>
 
 <style>
@@ -74,5 +93,22 @@ const Heading = headingLevel;
 
   .desc {
     max-width: 58ch;
+  }
+
+  .card {
+    gap: 0.6rem;
+  }
+
+  .thumb {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .card .thumb :global(.cover) {
+    transition: filter 0.2s ease;
+  }
+
+  .card:hover .thumb :global(.cover) {
+    filter: brightness(1.05) saturate(1.05);
   }
 </style>

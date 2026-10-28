@@ -1,14 +1,18 @@
 ---
-// One review in a list: small cover, where, what kind, title and summary.
+// One review in a list. Two looks:
+// - "row" (inside articles): small square cover beside where, kind, title and summary;
+// - "card" (home page and the Reviews page): a big cover with where, kind and title under it.
 import Cover from './Cover.astro';
 import { formatRange, reviewKind, reviewUrl, whereShort, whereLong, type Review } from '../lib/reviews';
 
 interface Props {
   review: Review;
   headingLevel?: 'h2' | 'h3';
+  variant?: 'row' | 'card';
 }
 
-const { review, headingLevel = 'h3' } = Astro.props;
+const { review, headingLevel = 'h3', variant = 'row' } = Astro.props;
+const card = variant === 'card';
 const { data } = review;
 const Heading = headingLevel;
 const isFlight = data.category === 'flight';
@@ -16,9 +20,22 @@ const isTrip = data.category === 'trip';
 const kind = isTrip ? 'Trip report' : reviewKind(data.category);
 ---
 
-<article class="item" data-category={data.category}>
+<article class:list={['item', { card }]} data-category={data.category}>
   <a class="thumb" href={reviewUrl(review)} tabindex="-1" aria-hidden="true">
-    <Cover image={data.cover} alt="" label={whereShort(review)} ratio="1 / 1" widths={[200, 400]} sizes="8rem" />
+    {
+      card ? (
+        <Cover
+          image={data.cover}
+          alt=""
+          label={whereShort(review)}
+          ratio="3 / 2"
+          widths={[400, 700, 1000]}
+          sizes="(min-width: 72rem) 23rem, (min-width: 44rem) 46vw, 100vw"
+        />
+      ) : (
+        <Cover image={data.cover} alt="" label={whereShort(review)} ratio="1 / 1" widths={[200, 400]} sizes="8rem" />
+      )
+    }
   </a>
   <div class="body">
     <p class="where">
@@ -28,7 +45,7 @@ const kind = isTrip ? 'Trip report' : reviewKind(data.category);
       {isFlight && data.airline && <span>{[data.airline, data.flight].filter(Boolean).join(' ')}</span>}
     </p>
     <Heading class="title"><a href={reviewUrl(review)}>{data.title}</a></Heading>
-    <p class="desc">{data.description}</p>
+    {!card && <p class="desc">{data.description}</p>}
   </div>
 </article>
 
@@ -83,8 +100,26 @@ const kind = isTrip ? 'Trip report' : reviewKind(data.category);
     max-width: 52ch;
   }
 
+  .card {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .card .thumb :global(.cover) {
+    transition: filter 0.2s ease;
+  }
+
+  .card:hover .thumb :global(.cover) {
+    filter: brightness(1.05) saturate(1.05);
+  }
+
+  .card .title {
+    font-size: var(--step-2);
+    line-height: 1.2;
+  }
+
   @media (max-width: 30rem) {
-    .item {
+    .item:not(.card) {
       grid-template-columns: 5rem 1fr;
       gap: 0.9rem;
     }

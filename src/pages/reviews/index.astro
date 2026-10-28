@@ -35,7 +35,7 @@ const used = (Object.keys(CATEGORIES) as Category[]).filter((c) => reviews.some(
     <p class="status visually-hidden" role="status" aria-live="polite"></p>
 
     <div class="list">
-      {reviews.map((r) => <ReviewItem review={r} headingLevel="h2" />)}
+      {reviews.map((r) => <ReviewItem review={r} headingLevel="h2" variant="card" />)}
     </div>
 
     {reviews.length === 0 && <p class="none">No reviews yet. Add one in src/content/reviews/.</p>}
@@ -124,8 +124,8 @@ const used = (Object.keys(CATEGORIES) as Category[]).filter((c) => reviews.some(
 
   .list {
     display: grid;
-    gap: 2.4rem;
-    max-width: 48rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: 2.6rem 2rem;
   }
 
   .list :global([hidden]) {

@@ -35,8 +35,8 @@ const stamp = latest ? postmarkText(latest) : undefined;
               image={latest.data.cover}
               alt=""
               label={whereShort(latest)}
-              ratio="16 / 9"
-              sizes="(min-width: 72rem) 70rem, 100vw"
+              ratio="3 / 2"
+              sizes="(min-width: 72rem) 38rem, (min-width: 56rem) 55vw, 100vw"
               loading="eager"
             />
           </a>
@@ -49,7 +49,6 @@ const stamp = latest ? postmarkText(latest) : undefined;
             <h1 class="feature-title">
               <a href={reviewUrl(latest)}>{latest.data.title}</a>
             </h1>
-            <p class="feature-desc">{latest.data.description}</p>
           </div>
         </article>
       ) : (
@@ -69,7 +68,7 @@ const stamp = latest ? postmarkText(latest) : undefined;
           </div>
           <div class="recent-list">
             {recent.map((r) => (
-              <ReviewItem review={r} />
+              <ReviewItem review={r} variant="card" />
             ))}
           </div>
         </section>
@@ -85,7 +84,7 @@ const stamp = latest ? postmarkText(latest) : undefined;
           </div>
           <div class="tips-list">
             {tips.map((t) => (
-              <TipItem tip={t} />
+              <TipItem tip={t} variant="card" />
             ))}
           </div>
         </section>
@@ -123,8 +122,9 @@ const stamp = latest ? postmarkText(latest) : undefined;
     line-height: 1.45;
   }
 
-  /* Featured latest review: wide cover with the postmark pressed over its edge */
+  /* Featured latest post: the cover beside its title, with the postmark pressed over the join */
   .feature {
+    position: relative;
     display: grid;
     gap: 0;
   }
@@ -136,19 +136,28 @@ const stamp = latest ? postmarkText(latest) : undefined;
   .feature-text {
     position: relative;
     display: grid;
-    gap: 0.7rem;
+    align-content: center;
+    gap: 0.8rem;
     padding: 1.6rem 0 0;
-    max-width: 44rem;
   }
 
+  /* Phones: the postmark sits on the cover's lower corner, clear of the text. */
   .feature-text :global(.feature-stamp) {
     position: absolute;
-    right: -1rem;
-    top: -4.5rem;
-    width: 14rem;
+    right: 0.25rem;
+    top: -4.4rem;
+    width: 8.5rem;
     color: var(--red);
     transform: rotate(-9deg);
     pointer-events: none;
+  }
+
+  .feature-text {
+    padding-right: 0;
+  }
+
+  .feature-kind {
+    padding-right: 5rem;
   }
 
   .feature-kind {
@@ -173,29 +182,25 @@ const stamp = latest ? postmarkText(latest) : undefined;
     text-decoration-thickness: 3px;
   }
 
-  .feature-desc {
-    font-size: var(--step-1);
-    line-height: 1.5;
-    max-width: 44ch;
-  }
-
   @media (min-width: 56rem) {
+    .feature {
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      gap: 3rem;
+      align-items: center;
+    }
     .feature-text {
-      max-width: none;
-      padding-right: 24rem;
+      padding: 0;
     }
-    .feature-text :global(.feature-stamp) {
-      right: -0.5rem;
-      top: -3.25rem;
-      width: 23rem;
+    .feature-kind {
+      padding-right: 0;
     }
-  }
-
-  @media (max-width: 40rem) {
+    /* Wider screens: the postmark is stamped under the title. */
     .feature-text :global(.feature-stamp) {
-      width: 10.5rem;
-      top: -2.6rem;
-      right: 0;
+      position: static;
+      order: 3;
+      justify-self: start;
+      width: 13rem;
+      margin: 0.4rem 0 0 -0.4rem;
     }
   }
 
@@ -231,20 +236,11 @@ const stamp = latest ? postmarkText(latest) : undefined;
     white-space: nowrap;
   }
 
-  .recent-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
-    gap: 2.2rem 3rem;
-  }
-
+  .recent-list,
   .tips-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
-    gap: 2rem 3rem;
-  }
-
-  .tips-list :global(.title) {
-    font-size: var(--step-1);
+    gap: 2.4rem 2rem;
   }
 
   .logbook-body {

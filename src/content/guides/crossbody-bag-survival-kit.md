@@ -3,6 +3,8 @@ title: 'My crossbody bag: the survival kit that never leaves my side'
 description: 'What’s in the small crossbody bag I carry on every long trip, why it never goes in the overhead bin, and what to look for if you want one of your own.'
 published: 2026-10-27
 topic: packing
+cover: ./images/crossbody-bag/01-contents.jpg
+coverAlt: 'Everything from the crossbody bag laid out on a desk'
 ---
 
 _This post isn’t sponsored by anyone, and it isn’t an ad for any of the brands below._

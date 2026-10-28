@@ -83,14 +83,17 @@ const topicKeys = Object.keys(TIP_TOPICS) as [keyof typeof TIP_TOPICS, ...(keyof
 // Guides: one Markdown file each in src/content/guides/.
 const guides = defineCollection({
   loader: glob({ base: './src/content/guides', pattern: '**/*.{md,mdx}' }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string(), // one sentence shown in lists and link previews
-    published: z.coerce.date(),
-    updated: z.coerce.date().optional(),
-    topic: z.enum(topicKeys),
-    draft: z.boolean().default(false),
-  }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      description: z.string(), // one sentence shown in link previews and under related guides
+      published: z.coerce.date(),
+      updated: z.coerce.date().optional(),
+      topic: z.enum(topicKeys),
+      cover: image().optional(), // shown on the home page and the Guides page
+      coverAlt: z.string().optional(),
+      draft: z.boolean().default(false),
+    }),
 });
 
 export const collections = { reviews, guides };

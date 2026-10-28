@@ -45,7 +45,7 @@ const countFor = (t: TipTopic) => tips.filter((tip) => tip.data.topic === t).len
       <div>
         <p class="status visually-hidden" role="status" aria-live="polite"></p>
         <div class="list">
-          {tips.map((tip) => <TipItem tip={tip} headingLevel="h2" />)}
+          {tips.map((tip) => <TipItem tip={tip} headingLevel="h2" variant="card" />)}
         </div>
         {tips.length === 0 && <p class="none">No guides yet. Add one in src/content/guides/.</p>}
       </div>
@@ -177,8 +177,8 @@ const countFor = (t: TipTopic) => tips.filter((tip) => tip.data.topic === t).len
 
   .list {
     display: grid;
-    gap: 2.6rem;
-    max-width: 46rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: 2.6rem 2rem;
   }
 
   .list :global([hidden]) {
