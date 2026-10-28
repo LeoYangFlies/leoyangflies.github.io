@@ -3,7 +3,7 @@
 // - "row" (inside articles): small square cover beside where, kind, title and summary;
 // - "card" (home page and the Reviews page): a big cover with where, kind and title under it.
 import Cover from './Cover.astro';
-import { formatRange, reviewKind, reviewUrl, whereShort, whereLong, type Review } from '../lib/reviews';
+import { formatDate, formatRange, reviewKind, reviewUrl, whereShort, whereLong, type Review } from '../lib/reviews';
 
 interface Props {
   review: Review;
@@ -18,6 +18,15 @@ const Heading = headingLevel;
 const isFlight = data.category === 'flight';
 const isTrip = data.category === 'trip';
 const kind = isTrip ? 'Trip report' : reviewKind(data.category);
+// When it happened: a trip's dates, a hotel stay's check-in to check-out, or the day flown or visited.
+const day = 24 * 60 * 60 * 1000;
+const when = isTrip && data.start && data.end
+  ? formatRange(data.start, data.end)
+  : data.date && data.nights
+    ? formatRange(data.date, new Date(data.date.valueOf() + data.nights * day))
+    : data.date
+      ? formatDate(data.date)
+      : data.when;
 ---
 
 <article class:list={['item', { card }]} data-category={data.category}>
@@ -38,12 +47,14 @@ const kind = isTrip ? 'Trip report' : reviewKind(data.category);
     }
   </a>
   <div class="body">
-    <p class="where">
-      <span class="kind">{kind}</span>
-      <span>{isFlight || isTrip ? whereShort(review) : whereLong(review)}</span>
-      {isTrip && data.start && data.end && <span>{formatRange(data.start, data.end)}</span>}
-      {isFlight && data.airline && <span>{[data.airline, data.flight].filter(Boolean).join(' ')}</span>}
-    </p>
+    <div class="meta">
+      <p class="where">
+        <span class="kind">{kind}</span>
+        <span>{isFlight || isTrip ? whereShort(review) : whereLong(review)}</span>
+        {isFlight && data.airline && <span>{[data.airline, data.flight].filter(Boolean).join(' ')}</span>}
+      </p>
+      {when && <p class="when">{when}</p>}
+    </div>
     <Heading class="title"><a href={reviewUrl(review)}>{data.title}</a></Heading>
     {!card && <p class="desc">{data.description}</p>}
   </div>
@@ -70,6 +81,16 @@ const kind = isTrip ? 'Trip report' : reviewKind(data.category);
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem 0.9rem;
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .meta {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .when {
     font-size: var(--step--1);
     color: var(--muted);
   }

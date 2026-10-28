@@ -69,6 +69,9 @@ const reviews = defineCollection({
         if ((data.category === 'lounge' || data.category === 'hotel') && (!data.place || !data.country)) {
           ctx.addIssue({ code: 'custom', message: 'Lounge and hotel reviews need place and country.' });
         }
+        if (data.category !== 'trip' && !data.date) {
+          ctx.addIssue({ code: 'custom', message: 'Reviews need a date: the day flown, visited or checked in.' });
+        }
         if (data.category === 'trip' && (!data.start || !data.end)) {
           ctx.addIssue({ code: 'custom', message: 'Trip reports need start and end dates.' });
         }
