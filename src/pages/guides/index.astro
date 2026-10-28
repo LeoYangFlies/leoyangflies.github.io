@@ -17,7 +17,7 @@ const countFor = (t: TipTopic) => tips.filter((tip) => tip.data.topic === t).len
       <p>{TIPS_DESCRIPTION}</p>
     </header>
 
-    <div class="layout">
+    <div class:list={["layout", { "with-topics": used.length > 1 }]}>
       {
         used.length > 1 && (
           <nav class="topics" aria-label="Topics">
@@ -142,7 +142,7 @@ const countFor = (t: TipTopic) => tips.filter((tip) => tip.data.topic === t).len
   }
 
   @media (min-width: 56rem) {
-    .layout {
+    .layout.with-topics {
       grid-template-columns: 13rem minmax(0, 1fr);
       gap: 4rem;
     }

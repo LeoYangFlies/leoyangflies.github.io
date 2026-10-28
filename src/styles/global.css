@@ -210,6 +210,14 @@ img {
   margin-block: 1.6em;
 }
 
+/* Keep tall (portrait) photos from filling more than a screen. */
+.prose img {
+  display: block;
+  width: auto;
+  max-height: min(85vh, 40rem);
+  margin-inline: auto;
+}
+
 .prose figure {
   margin: 1.8em 0;
 }
