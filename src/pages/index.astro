@@ -1,14 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
 import Cover from '../components/Cover.astro';
-import Postmark from '../components/Postmark.astro';
 import ReviewItem from '../components/ReviewItem.astro';
 import RouteMap from '../components/RouteMap.astro';
 import TipItem from '../components/TipItem.astro';
 import FlightNow from '../components/FlightNow.astro';
 import { getNow } from '../lib/now';
 import { SITE_DESCRIPTION, TIPS_TITLE } from '../consts';
-import { getReviews, reviewKind, reviewUrl, postmarkText, whereShort, whereLong } from '../lib/reviews';
+import { getReviews, reviewKind, reviewUrl, whereShort, whereLong } from '../lib/reviews';
 import { getStats, fmt, routeLegs } from '../lib/flights';
 import { getTips } from '../lib/tips';
 
@@ -19,7 +18,6 @@ const recent = reviews.filter((r) => r !== latest).slice(0, 6);
 const stats = getStats();
 const now = getNow();
 const tips = (await getTips()).slice(0, 3);
-const stamp = latest ? postmarkText(latest) : undefined;
 ---
 
 <Base>
@@ -28,7 +26,7 @@ const stamp = latest ? postmarkText(latest) : undefined;
     <p class="intro">{SITE_DESCRIPTION}</p>
 
     {
-      latest && stamp ? (
+      latest ? (
         <article class="feature">
           <a class="feature-cover" href={reviewUrl(latest)} tabindex="-1" aria-hidden="true">
             <Cover
@@ -41,7 +39,6 @@ const stamp = latest ? postmarkText(latest) : undefined;
             />
           </a>
           <div class="feature-text">
-            <Postmark class="feature-stamp" top={stamp.top} bottom={stamp.bottom} date={latest.data.published} />
             <p class="feature-kind">
               {latest.data.category === 'trip' ? 'Latest trip report' : `Latest ${reviewKind(latest.data.category).toLowerCase()} review`}:{' '}
               {whereLong(latest)}
@@ -122,7 +119,7 @@ const stamp = latest ? postmarkText(latest) : undefined;
     line-height: 1.45;
   }
 
-  /* Featured latest post: the cover beside its title, with the postmark pressed over the join */
+  /* Featured latest post: the cover beside its title */
   .feature {
     position: relative;
     display: grid;
@@ -139,25 +136,6 @@ const stamp = latest ? postmarkText(latest) : undefined;
     align-content: center;
     gap: 0.8rem;
     padding: 1.6rem 0 0;
-  }
-
-  /* Phones: the postmark sits on the cover's lower corner, clear of the text. */
-  .feature-text :global(.feature-stamp) {
-    position: absolute;
-    right: 0.25rem;
-    top: -4.4rem;
-    width: 8.5rem;
-    color: var(--red);
-    transform: rotate(-9deg);
-    pointer-events: none;
-  }
-
-  .feature-text {
-    padding-right: 0;
-  }
-
-  .feature-kind {
-    padding-right: 5rem;
   }
 
   .feature-kind {
@@ -190,17 +168,6 @@ const stamp = latest ? postmarkText(latest) : undefined;
     }
     .feature-text {
       padding: 0;
-    }
-    .feature-kind {
-      padding-right: 0;
-    }
-    /* Wider screens: the postmark is stamped under the title. */
-    .feature-text :global(.feature-stamp) {
-      position: static;
-      order: 3;
-      justify-self: start;
-      width: 13rem;
-      margin: 0.4rem 0 0 -0.4rem;
     }
   }
 
