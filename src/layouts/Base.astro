@@ -87,9 +87,7 @@ const year = new Date().getFullYear();
           {SOCIAL.instagram && <li><a href={SOCIAL.instagram} rel="me">Instagram</a></li>}
           {SOCIAL.email && <li><a href={`mailto:${SOCIAL.email}`}>Email</a></li>}
         </ul>
-        <p class="footer-copy">
-          © {year} {AUTHOR} · Site designed and built by <a href="https://claude.ai">Claude</a>, Anthropic's AI
-        </p>
+        <p class="footer-copy">© {year} {AUTHOR} · Site designed and built by Claude</p>
       </div>
       <div class="airmail" aria-hidden="true"></div>
     </footer>
@@ -196,10 +194,6 @@ const year = new Date().getFullYear();
 
   .footer-copy {
     grid-column: 1 / -1;
-  }
-
-  .footer-copy a {
-    color: var(--muted);
   }
 
   @media (max-width: 40rem) {
