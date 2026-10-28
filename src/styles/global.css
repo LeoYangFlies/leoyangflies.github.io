@@ -195,6 +195,80 @@ img {
   margin-top: 0.35em;
 }
 
+/* In-article menu ("In this review", "In this guide"), built by src/lib/markdown-toc.mjs. */
+.prose .toc {
+  margin: 1.8em 0 2.2em;
+  padding: 1.2rem 1.4rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.prose .toc-label {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.prose .toc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: toc;
+}
+
+.prose .toc-list li {
+  counter-increment: toc;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.42rem 0;
+  break-inside: avoid;
+  line-height: 1.35;
+}
+
+.prose .toc-list li + li {
+  border-top: 1px solid var(--rule);
+}
+
+.prose .toc-list li::before {
+  content: counter(toc, decimal-leading-zero);
+  flex: none;
+  min-width: 1.4rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--red);
+}
+
+.prose .toc-list a {
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.prose .toc-list a:hover,
+.prose .toc-list a:focus-visible {
+  color: var(--red);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+@media (min-width: 40rem) {
+  /* Long menus read down two columns. */
+  .prose .toc-columns {
+    columns: 2;
+    column-gap: 2rem;
+  }
+  .prose .toc-columns .col-start {
+    break-before: column;
+    border-top: 0;
+  }
+}
+
 .prose blockquote {
   margin-inline: 0;
   padding-left: 1.1em;
