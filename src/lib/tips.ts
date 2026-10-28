@@ -18,7 +18,4 @@ export function tipUrl(tip: Tip): string {
 }
 
 /** Rough reading time from the Markdown body. */
-export function readingMinutes(tip: Tip): number {
-  const words = (tip.body ?? '').split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(words / 220));
-}
+export { readingMinutes } from './reading';

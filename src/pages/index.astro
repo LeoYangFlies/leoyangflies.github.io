@@ -10,6 +10,7 @@ import { SITE_DESCRIPTION, TIPS_TITLE } from '../consts';
 import { getReviews, reviewKind, reviewUrl, whereShort, whereLong } from '../lib/reviews';
 import { getStats, fmt, routeLegs } from '../lib/flights';
 import { getTips } from '../lib/tips';
+import { readingMinutes } from '../lib/reading';
 
 const reviews = await getReviews();
 // Lead with the newest trip report; fall back to the newest review of any kind.
@@ -42,6 +43,7 @@ const tips = (await getTips()).slice(0, 3);
             <p class="feature-kind">
               {latest.data.category === 'trip' ? 'Latest trip report' : `Latest ${reviewKind(latest.data.category).toLowerCase()} review`}:{' '}
               {whereLong(latest)}
+              <span class="feature-time">{readingMinutes(latest)} min read</span>
             </p>
             <h1 class="feature-title">
               <a href={reviewUrl(latest)}>{latest.data.title}</a>
@@ -143,6 +145,13 @@ const tips = (await getTips()).slice(0, 3);
     font-size: var(--step--1);
     font-weight: 600;
     color: var(--blue);
+  }
+
+  .feature-time {
+    margin-left: 0.9rem;
+    font-weight: 400;
+    color: var(--muted);
+    white-space: nowrap;
   }
 
   .feature-title {

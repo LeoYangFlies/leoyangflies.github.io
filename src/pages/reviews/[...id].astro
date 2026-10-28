@@ -6,6 +6,7 @@ import Cover from '../../components/Cover.astro';
 import Postmark from '../../components/Postmark.astro';
 import ReviewItem from '../../components/ReviewItem.astro';
 import RouteMap from '../../components/RouteMap.astro';
+import { readingMinutes } from '../../lib/reading';
 import { getAirport, distanceKm } from '../../data/airports';
 import { fmt, formatMinutes } from '../../lib/flights';
 import type { MapLeg } from '../../components/RouteMap.astro';
@@ -108,8 +109,13 @@ const facts: { label: string; value: string }[] = isTrip
         ]
       : [
           { label: 'Where', value: whereLong(review) },
-          ...(data.when ? [{ label: 'Visited', value: data.when }] : []),
+          ...(data.date
+            ? [{ label: 'Visited', value: formatDate(data.date) }]
+            : data.when
+              ? [{ label: 'Visited', value: data.when }]
+              : []),
         ];
+facts.push({ label: 'Reading time', value: `${readingMinutes(review)} min` });
 ---
 
 <Base title={data.title} description={data.description} image={ogImage} type="article">
