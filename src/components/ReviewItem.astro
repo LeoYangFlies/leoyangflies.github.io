@@ -131,6 +131,7 @@ const when = isTrip && data.start && data.end
   .card {
     grid-template-columns: 1fr;
     gap: 0.85rem;
+    align-content: start; /* cards in a row line up even when titles differ in length */
   }
 
   .card .thumb :global(.cover) {

@@ -35,6 +35,7 @@ export const TIP_TOPICS = {
   jetlag: 'Jet lag',
   packing: 'Packing',
   points: 'Points and miles',
+  news: 'News',
 } as const;
 
 export type TipTopic = keyof typeof TIP_TOPICS;
