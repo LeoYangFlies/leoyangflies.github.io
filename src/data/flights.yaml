@@ -209,3 +209,6 @@
 # 2010
 - { date: 2010-03-10, airline: Juneyao Air, flight: HO 1208, from: SYX, to: PVG, aircraft: Airbus A320, cabin: Economy, duration: 2h 45m }
 - { date: 2010-03-07, airline: Juneyao Air, flight: HO 1209, from: PVG, to: SYX, aircraft: Airbus A320, cabin: Economy, duration: 3h 10m }
+
+# Added automatically after landing
+- { date: 2026-11-20, airline: Air Canada, flight: AC 725, from: LGA, to: YYZ, duration: 1h 42m }
