@@ -212,3 +212,4 @@
 
 # Added automatically after landing
 - { date: 2026-11-20, airline: Air Canada, flight: AC 725, from: LGA, to: YYZ, duration: 1h 42m }
+- { date: 2026-11-21, airline: Philippine Airlines, flight: PR 119, from: YYZ, to: MNL, duration: 16h 45m }
