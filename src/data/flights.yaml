@@ -15,6 +15,10 @@
 
 
 # 2026
+- { date: 2026-11-22, airline: Cathay Pacific, flight: CX 364, from: HKG, to: PVG, aircraft: Airbus A330-300, cabin: Economy, seat: 44K, duration: 2h 52m }
+- { date: 2026-11-22, airline: Cathay Pacific, flight: CX 906, from: MNL, to: HKG, aircraft: Airbus A321neo, cabin: Economy, seat: 24K, duration: 2h 24m }
+- { date: 2026-11-21, airline: Philippine Airlines, flight: PR 119, from: YYZ, to: MNL, aircraft: Airbus A350-1000, cabin: Business, seat: 4K, duration: 16h 2m }
+- { date: 2026-11-20, airline: Air Canada, flight: AC 725, from: LGA, to: YYZ, aircraft: Airbus A320, cabin: Economy, seat: 13A, duration: 1h 27m }
 - { date: 2026-09-28, airline: Delta Air Lines, flight: DL 1316, from: DTW, to: JFK, aircraft: Airbus A319, cabin: Economy, duration: 2h 1m }
 - { date: 2026-09-27, airline: Delta Air Lines, flight: DL 5841, from: PIT, to: DTW, aircraft: Embraer 175, cabin: Economy, duration: 1h 16m }
 - { date: 2026-09-26, airline: American Airlines, flight: AA 2675, from: ORD, to: PIT, aircraft: Airbus A320, cabin: Economy, seat: 4F, duration: 1h 23m }
@@ -211,7 +215,3 @@
 - { date: 2010-03-07, airline: Juneyao Air, flight: HO 1209, from: PVG, to: SYX, aircraft: Airbus A320, cabin: Economy, duration: 3h 10m }
 
 # Added automatically after landing
-- { date: 2026-11-20, airline: Air Canada, flight: AC 725, from: LGA, to: YYZ, duration: 1h 42m }
-- { date: 2026-11-21, airline: Philippine Airlines, flight: PR 119, from: YYZ, to: MNL, duration: 16h 45m }
-- { date: 2026-11-22, airline: Cathay Pacific, flight: CX 906, from: MNL, to: HKG, duration: 2h 30m }
-- { date: 2026-11-22, airline: Cathay Pacific, flight: CX 364, from: HKG, to: PVG, duration: 2h 45m }
