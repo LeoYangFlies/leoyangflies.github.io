@@ -14,7 +14,8 @@ import { readingMinutes } from '../lib/reading';
 
 const reviews = await getReviews();
 // Lead with the newest trip report; fall back to the newest review of any kind.
-const latest = reviews.find((r) => r.data.category === 'trip') ?? reviews[0];
+// The newest post leads (on the same day, a trip report comes before its reviews).
+const latest = reviews[0];
 const recent = reviews.filter((r) => r !== latest).slice(0, 6);
 const stats = getStats();
 const now = getNow();
