@@ -215,3 +215,4 @@
 - { date: 2010-03-07, airline: Juneyao Air, flight: HO 1209, from: PVG, to: SYX, aircraft: Airbus A320, cabin: Economy, duration: 3h 10m }
 
 # Added automatically after landing
+- { date: 2026-11-26, airline: Singapore Airlines, flight: SQ 827, from: PVG, to: SIN, duration: 5h 50m }
