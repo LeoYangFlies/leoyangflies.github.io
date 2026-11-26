@@ -216,3 +216,4 @@
 
 # Added automatically after landing
 - { date: 2026-11-26, airline: Singapore Airlines, flight: SQ 827, from: PVG, to: SIN, duration: 5h 50m }
+- { date: 2026-11-26, airline: Thai Airways, flight: TG 414, from: SIN, to: BKK, duration: 2h 20m }
